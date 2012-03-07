@@ -1,6 +1,6 @@
 // Simple bouncing ball class
 
-class Ball {
+class Leaf {
   PImage img;
   float x,y,z,angle;
   float sx = 0,sy = 0, sz = 0;
@@ -8,7 +8,7 @@ class Ball {
   float life = 255;
   String imageFile;
   
-  Ball(float x, float y, float z,PImage img) {
+  Leaf(float x, float y, float z,PImage img) {
     this.x = x;
     this.y = y;
     this.z = z;

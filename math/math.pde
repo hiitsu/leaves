@@ -1,11 +1,11 @@
 import processing.opengl.*;
 
-ArrayList balls;
 int W = 128;
-int M = 10;
+int M = 20;
 float DEACCELERATION = 0.5;
 int distanceThreshold = 100;
 ArrayList images;
+ArrayList leaves;
 
 void setup() {
   size(800, 600,OPENGL);
@@ -19,29 +19,29 @@ void setup() {
     else
       break;
   }
-  frameRate(50);
+  frameRate(30);
   smooth();
   //noStroke();
-  balls = new ArrayList(M);
+  leaves = new ArrayList(M);
   for(int i=0; i < M;i++)
-    balls.add(new Ball(random(0,width),random(0,height),0,(PImage)images.get(int(random(0,images.size())))));
+    leaves.add(new Leaf(random(0,width),random(0,height),0.0,(PImage)images.get(int(random(0,images.size())))));
 
 }
 
 void draw() {
   background(255);
 
-  for (int i = balls.size()-1; i >= 0; i--) { 
-    Ball ball = (Ball) balls.get(i);
-    float distance = dist(ball.x,ball.y, mouseX, mouseY),
-      dx = ball.x-mouseX,
-      dy = ball.y-mouseY;
+  for (int i = leaves.size()-1; i >= 0; i--) { 
+    Leaf leaf = (Leaf) leaves.get(i);
+    float distance = dist(leaf.x,leaf.y, mouseX, mouseY),
+      dx = leaf.x-mouseX,
+      dy = leaf.y-mouseY;
     if( distance < distanceThreshold ) {
-      ball.sx += dx/100;
-      ball.sy += dy/100;
+      leaf.sx += dx/100;
+      leaf.sy += dy/100;
     }
-    ball.move();
-    ball.display(this);
+    leaf.move();
+    leaf.display(this);
   }
   strokeWeight(2.0);
   fill(255,0,0);
@@ -49,7 +49,6 @@ void draw() {
 }
 
 void mousePressed() {
-  // A new ball object is added to the ArrayList (by default to the end)
-//  balls.add(new Ball(mouseX, mouseY, W));
+
 }
 
