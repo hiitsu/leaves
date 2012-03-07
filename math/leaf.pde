@@ -2,7 +2,7 @@
 
 class Leaf {
   PImage img;
-  float x,y,z,angle;
+  float x,y,z,angle,spin;
   float sx = 0,sy = 0, sz = 0;
   float w;
   float life = 255;
@@ -13,6 +13,7 @@ class Leaf {
     this.y = y;
     this.z = z;
     this.angle = 0;
+    this.spin = 0.5;
     this.img = img;
   }
   
@@ -20,7 +21,7 @@ class Leaf {
       x += sx;
       y += sy;
       z = sx*5+sy*5;
-      angle += 0.01;
+      angle += spin;
       if( sx != 0 ){
         if( sx > 0 ){
             sx -= DEACCELERATION;
@@ -36,7 +37,12 @@ class Leaf {
         if( sy < 0 ){
             sy += DEACCELERATION;
         }
-      }       
+      }
+      if( spin != 0 ){
+        if( spin > 0 ){
+            spin -= 0.01;
+        }
+      }      
   }
   
   boolean finished() {

@@ -1,11 +1,11 @@
 import processing.opengl.*;
 
 int W = 128;
-int M = 20;
+int M = 50;
 float DEACCELERATION = 0.5;
 int distanceThreshold = 100;
 ArrayList images;
-ArrayList leaves;
+Leaf[] leaves = new Leaf[M];
 
 void setup() {
   size(800, 600,OPENGL);
@@ -22,17 +22,16 @@ void setup() {
   frameRate(30);
   smooth();
   //noStroke();
-  leaves = new ArrayList(M);
   for(int i=0; i < M;i++)
-    leaves.add(new Leaf(random(0,width),random(0,height),0.0,(PImage)images.get(int(random(0,images.size())))));
+    leaves[i] = new Leaf(random(0,width),random(0,height),0.0,(PImage)images.get(int(random(0,images.size()))));
 
 }
 
 void draw() {
   background(255);
-
-  for (int i = leaves.size()-1; i >= 0; i--) { 
-    Leaf leaf = (Leaf) leaves.get(i);
+  float m = millis();
+  for (int i = leaves.length-1; i >= 0; i--) { 
+    Leaf leaf = (Leaf) leaves[i];
     float distance = dist(leaf.x,leaf.y, mouseX, mouseY),
       dx = leaf.x-mouseX,
       dy = leaf.y-mouseY;
