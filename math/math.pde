@@ -1,10 +1,11 @@
 import processing.opengl.*;
 
 int W = 128;
-int M = 50;
+int M = 10;
 float DEACCELERATION = 0.5;
 int distanceThreshold = 100;
-ArrayList images;
+float updateIntervalMillis = 100, lastUpdateMillis = millis();
+ArrayList images; // of PImages
 Leaf[] leaves = new Leaf[M];
 
 void setup() {
@@ -12,7 +13,7 @@ void setup() {
   hint(DISABLE_DEPTH_TEST);
 //  hint(ENABLE_DEPTH_SORT);
   images = new ArrayList();
-  for(int c=1;c<50;c++) {
+  for(int c=1;;c++) {
     PImage img = loadImage("/../../resources/leaves/highres/leaves_"+nf(c,2)+".png");
     if( img != null )
       images.add(img);
@@ -29,15 +30,18 @@ void setup() {
 
 void draw() {
   background(255);
-  float m = millis();
+  float now = millis();
+  if( now - lastUpdateMillis > updateIntervalMillis ) {
+    lastUpdateMillis = now;
+  }
   for (int i = leaves.length-1; i >= 0; i--) { 
     Leaf leaf = (Leaf) leaves[i];
-    float distance = dist(leaf.x,leaf.y, mouseX, mouseY),
-      dx = leaf.x-mouseX,
-      dy = leaf.y-mouseY;
+    float distance = dist(leaf.location.x,leaf.location.y, mouseX, mouseY),
+      dx = leaf.location.x-mouseX,
+      dy = leaf.location.y-mouseY;
     if( distance < distanceThreshold ) {
-      leaf.sx += dx/100;
-      leaf.sy += dy/100;
+      leaf.velocity.x += dx/100;
+      leaf.velocity.y += dy/100;
     }
     leaf.move();
     leaf.display(this);
@@ -45,6 +49,10 @@ void draw() {
   strokeWeight(2.0);
   fill(255,0,0);
   ellipse(mouseX,mouseY,20,20);
+}
+
+void mouseMoved(){
+  
 }
 
 void mousePressed() {

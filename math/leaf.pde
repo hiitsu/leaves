@@ -2,47 +2,26 @@
 
 class Leaf {
   PImage img;
-  float x,y,z,angle,spin;
-  float sx = 0,sy = 0, sz = 0;
-  float w;
-  float life = 255;
-  String imageFile;
+  PVector velocity ,location, deacceleration;
+  float angle,spin;
   
   Leaf(float x, float y, float z,PImage img) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
+    this.location = new PVector(x,y,z);
+    this.velocity  = new PVector(0,0,0);
+    this.deacceleration  = new PVector(0.1,0.1,0.0);
     this.angle = 0;
-    this.spin = 0.5;
+    this.spin = 0.01;
     this.img = img;
   }
   
     void move() {
-      x += sx;
-      y += sy;
-      z = sx*5+sy*5;
+      location.add(velocity);
+      float magnitude = velocity.mag();
+      if( magnitude > 0 )
+        velocity.sub(deacceleration);
+      else if( magnitude < 0 )
+        velocity = new PVector(0,0,0);
       angle += spin;
-      if( sx != 0 ){
-        if( sx > 0 ){
-            sx -= DEACCELERATION;
-        }
-        if( sx < 0 ){
-            sx += DEACCELERATION;
-        }
-      }
-      if( sy != 0 ){
-        if( sy > 0 ){
-            sy -= DEACCELERATION;
-        }
-        if( sy < 0 ){
-            sy += DEACCELERATION;
-        }
-      }
-      if( spin != 0 ){
-        if( spin > 0 ){
-            spin -= 0.01;
-        }
-      }      
   }
   
   boolean finished() {
@@ -52,7 +31,7 @@ class Leaf {
   void display(PApplet view) {
                 view.textureMode(NORMALIZED);
 		view.pushMatrix();
-		view.translate(x,y,z);
+		view.translate(location.x,location.y,location.z);
 		view.rotate(angle);
 		view.noStroke();
                 view.beginShape(PConstants.QUADS);
