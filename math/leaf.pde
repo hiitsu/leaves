@@ -60,7 +60,7 @@ class Leaf {
 			h = img.height/4;
 		vertex(-w/2,-h/2,map(sin(cornerFluctuation),-1,1,-10,10),0,0);
 		vertex(w/2,-h/2,map(sin(cornerFluctuation+1.5),-1,1,-10,10),w,0);
-		vertex(w/2,h/2,map(sin(cornerFluctuation+2.4),-1,1,-10,105),w,h);
+		vertex(w/2,h/2,map(sin(cornerFluctuation+2.4),-1,1,-10,10),w,h);
 		vertex(-w/2,h/2,map(sin(cornerFluctuation-1.5),-1,1,-10,10),0,h);
 		endShape();
                 if( debug ) {
