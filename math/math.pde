@@ -28,25 +28,25 @@ float movementAngle,
 void setup() {
 	size(800, 600,OPENGL);
 	frameRate(30);
-	hint(DISABLE_DEPTH_TEST);
-	//hint(ENABLE_DEPTH_SORT);
+        hint(DISABLE_DEPTH_TEST);
         // call this before setLeaves
         loadImages(10);
         controlP5 = new ControlP5(this);
         controlP5.setAutoInitialization(true);
         
         // controls on the left side
-        controlP5.addSlider("distanceThreshold",5,200,distanceThreshold,20,60,30,80);
+        controlP5.addSlider("distanceThreshold",50,200,distanceThreshold,20,60,30,80);
         controlP5.addSlider("movementThreshold",1,100,movementThreshold,20,160,30,80);
         controlP5.addSlider("updateInterval",5,100,updateInterval,20,260,30,80);
         controlP5.addSlider("topSpinSpeed",0.001,1.0,topSpinSpeed,20,360,30,80);
         controlP5.addSlider("topVelocity",5,50,topVelocity,20,460,30,80);
 
         // controls on the right side
+        controlP5.addToggle("network",false,width-50,10,30,30);
         controlP5.addSlider("leafCount",1,500,leafCount,width-50,60,30,80);
 
         setLeaves(leafCount);
-        //client =  new Client(this, "127.0.0.1", 12345);
+       
 }
 
 void draw() {
@@ -90,8 +90,8 @@ void draw() {
                         float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,25);
                         if( distance < distanceThreshold ) {
                                 float distanceFactor = map(distance,0,distanceThreshold,1,2);
-				leaf.velocity.x += (dx/30)*distanceFactor;
-				leaf.velocity.y += (dy/30)*distanceFactor;
+				leaf.velocity.x += (dx/30.0)*distanceFactor;
+				leaf.velocity.y += (dy/30.0)*distanceFactor;
                                 leaf.spinSpeed += (rotationFactor/6)*rotationDirection;
                                 leaf.location.z += zFactor*distanceFactor;
                                 leaf.increaseFluctuation(distanceFactor*5);
@@ -99,6 +99,7 @@ void draw() {
 			
 		}
 	}
+
 	
 	// draw video frame, leaves, and mask
 	for (int i = leaves.size()-1; i >= 0; i--) {
@@ -106,7 +107,11 @@ void draw() {
 		((Leaf)leaves.get(i)).display();
         }
 		
-	// drawing debug stuff
+      
+        // draw mask
+        
+        
+	// drawing debug stuff, depth sort not needed
 	if( !debug )
 		return;
 	stroke(0,0,255);
@@ -168,6 +173,18 @@ void leafCount(int v){
   leafCount = v;
   setLeaves(leafCount);
   println("leafCount set to: "+v);
+}
+void network(boolean flag){
+  println("network set to: "+flag);
+  if( flag ) {
+      client = new Client(this, "127.0.0.1", 12345);
+  } else {
+    if( client == null )
+    return;
+     client.clear();
+     client.stop();
+     client = null;
+  }
 }
 // read images files from disk into ArrayList<PImage> images
 void loadImages(int maxImages) {
