@@ -1,7 +1,7 @@
 import processing.opengl.*;
 
 int M = 1;
-float distanceThreshold = 50,
+float distanceThreshold = 100,
       movementThreshold = 20;
 float updateIntervalMillis = 50, lastUpdateMillis = millis();
 
@@ -64,10 +64,11 @@ void draw() {
                         float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
                         float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,10);
                         if( distance < distanceThreshold ) {
-				leaf.velocity.x += dx/40;
-				leaf.velocity.y += dy/40;
-                                leaf.spin += rotationFactor/4;
-                                leaf.location.z += zFactor;
+                                float distanceFactor = map(distance,0,distanceThreshold,1,2);
+				leaf.velocity.x += (dx/30)*distanceFactor;
+				leaf.velocity.y += (dy/30)*distanceFactor;
+                                leaf.spin += (rotationFactor/4)*distanceFactor;
+                                leaf.location.z += zFactor*distanceFactor;
 			}
 			
 		}
