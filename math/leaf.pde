@@ -2,7 +2,7 @@
 
 class Leaf {
 	PImage img;
-	PVector velocity ,location, acceleration;
+	PVector velocity ,location, acceleration,gravity;
 	float angle,spin;
 	float TOPSPEED = 10.0;
 
@@ -10,6 +10,7 @@ class Leaf {
 		this.location = new PVector(x,y,z);
 		this.velocity  = new PVector(0,0,0);
 		this.acceleration  = new PVector(0.5,0.5,0.0);
+                this.gravity  = new PVector(0.0,0.0,0.5);
 		this.angle = 0;
 		this.spin = 0.01;
 		this.img = img;
@@ -18,6 +19,8 @@ class Leaf {
 	void move() {
 		velocity.limit(TOPSPEED);
 		location.add(velocity);
+                if( location.z > 0 )
+                   location.sub(gravity);
 		if( velocity.x > 0 )
 			velocity.x -= acceleration.x;
 		if( velocity.x < 0 )
@@ -29,11 +32,10 @@ class Leaf {
 		if( abs(velocity.mag()) < 0.01 )
 			velocity = new PVector(0,0,0);
 		angle += spin;
+                if( spin > 0 ) spin -= 0.01;
+                if( spin < 0 ) spin += 0.01;
+                if( spin*1000 < 10 ) spin = 0;
 		println(velocity);
-	}
-
-	boolean finished() {
-		false;
 	}
 
 	void display(PApplet view) {

@@ -1,14 +1,17 @@
 import processing.opengl.*;
 
-int W = 128;
 int M = 1;
-float DEACCELERATION = 0.5;
-int distanceThreshold = 50;
+float distanceThreshold = 50,
+      movementThreshold = 20;
 float updateIntervalMillis = 50, lastUpdateMillis = millis();
-float lastX = -1,lastY = -1, angle = 0;
+
+float lastMouseX = -1,
+      lastMouseY = -1;
 ArrayList images; // of PImages
 Leaf[] leaves = new Leaf[M];
+
 boolean debug = true;
+float movementAngle,forceAngle;
 
 void setup() {
 	size(800, 600,OPENGL);
@@ -18,7 +21,7 @@ void setup() {
 	images = new ArrayList();
 	for(int c=1;;c++) {
 		PImage img = loadImage("/../../resources/leaves/highres/leaves_"+nf(c,2)+".png");
-		if( !img != null )
+		if( img == null )
 			break;
 		images.add(img);
 	}
@@ -35,30 +38,46 @@ void setup() {
 void draw() {
 	background(255);
 	float now = millis();
-	
+
 	// update data
-	if( now - lastUpdateMillis > updateIntervalMillis ) {
-		lastUpdateMillis = now;
-		PVector magnitude = new PVector(lastX-mouseX,lastY-mouseY,0);
-		angle = atan2(magnitude.x,magnitude.y);
-		lastX = mouseX;
-		lastY = mouseY;
+        PVector movementVector = new PVector(lastMouseX-mouseX,lastMouseY-mouseY,0);
+        float movementMagnitude = movementVector.mag();
+	if( now - lastUpdateMillis > updateIntervalMillis && 
+                movementMagnitude > movementThreshold ) {
+		
+                lastUpdateMillis = now;
+		lastMouseX = mouseX;
+		lastMouseY = mouseY;
+		movementAngle = atan2(movementVector.x,movementVector.y);
+
 		for (int i = leaves.length-1; i >= 0; i--) { 
 			Leaf leaf = (Leaf) leaves[i];
+                        PVector vect = new PVector(leaf.location.x-mouseX,leaf.location.y-mouseY);
 			float distance = dist(leaf.location.x,leaf.location.y, mouseX, mouseY),
 				dx = (leaf.location.x-mouseX),
 				dy = (leaf.location.y-mouseY);
-			if( distance < distanceThreshold ) {
-				leaf.velocity.x += dx/50;
-				leaf.velocity.y += dy/50;
+                        float normalizedForceAngle = forceAngle = PVector.angleBetween(movementVector,vect);
+                        if( forceAngle > (PI/2) )
+                            normalizedForceAngle = (PI/2)-(forceAngle%(PI/2));
+                            
+                        // closer the angle is to 90 apply more rotation
+                        float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
+                        float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,10);
+                        if( distance < distanceThreshold ) {
+				leaf.velocity.x += dx/40;
+				leaf.velocity.y += dy/40;
+                                leaf.spin += rotationFactor/4;
+                                leaf.location.z += zFactor;
 			}
-			leaf.move();
+			
 		}
 	}
 	
 	// draw video frame, leaves, and mask
-	for (int i = leaves.length-1; i >= 0; i--)
+	for (int i = leaves.length-1; i >= 0; i--) {
+                 leaves[i].move();
 		leaves[i].display(this);
+        }
 		
 	// drawing debug stuff
 	if( !debug )
@@ -66,8 +85,9 @@ void draw() {
 	stroke(0,0,255);
 	strokeWeight(5.0);
 	fill(255,0,0);
-	line(lastX,lastY,0,mouseX,mouseY,0);
-	text("angle:"+nf(angle,1,2),50+mouseX,mouseY);
+	line(lastMouseX,lastMouseY,0,mouseX,mouseY,0);
+	text("movement angle:"+nf(degrees(movementAngle),1,2),50+mouseX,mouseY);
+	text("force angle:"+nf(degrees(forceAngle),1,2),50+mouseX,40+mouseY);
 	strokeWeight(2.0);
 	fill(255,0,0);
 	ellipse(mouseX,mouseY,20,20);
