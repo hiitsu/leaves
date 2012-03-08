@@ -2,7 +2,7 @@ import controlP5.*;
 
 import processing.opengl.*;
 
-int M = 10;
+int M = 100;
 float distanceThreshold = 100,
       movementThreshold = 20;
 float updateIntervalMillis = 25, lastUpdateMillis = millis();
@@ -13,13 +13,15 @@ ArrayList images; // of PImages
 Leaf[] leaves = new Leaf[M];
 ControlP5 controlP5;
 
+//Client client;
+
 boolean debug = true;
 float movementAngle,
       forceAngle,
       normalizedForceAngle;
 
 void setup() {
-	size(800, 600,OPENGL);
+	size(1024, 768,OPENGL);
 	frameRate(30);
 	hint(DISABLE_DEPTH_TEST);
 	//hint(ENABLE_DEPTH_SORT);
@@ -30,7 +32,7 @@ void setup() {
         
         // read images files from disk into ArrayList<PImage> images
 	images = new ArrayList();
-	for(int c=1;c < 5;c++) {
+	for(int c=1;c < 25;c++) {
 		PImage img = loadImage("/../../resources/leaves/highres/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
@@ -45,6 +47,7 @@ void setup() {
 			(PImage)images.get(int(random(0,images.size())))
 		);
 	}
+        //client =  new Client(this, "127.0.0.1", 12345);
 }
 
 void draw() {
@@ -144,3 +147,9 @@ void distanceThreshold(float v){
   distanceThreshold = v;
   println("distanceThreshold set to: "+v);
 }
+/*
+void clientEvent(Client c) {
+  data = client.read();
+  println("Server Says:  "+data);
+}
+*/
