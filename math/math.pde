@@ -90,7 +90,7 @@ void draw() {
 	// draw video frame, leaves, and mask
 	for (int i = leaves.length-1; i >= 0; i--) {
                 leaves[i].update();
-		leaves[i].display(this);
+		leaves[i].display();
         }
 		
 	// drawing debug stuff

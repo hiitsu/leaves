@@ -48,27 +48,29 @@ class Leaf {
                 if( abs(spin)*1000 < 10 ) spin = 0;
 	}
 
-	void display(PApplet view) {
-		view.textureMode(NORMALIZED);
-		view.pushMatrix();
-		view.translate(location.x,location.y,location.z);
-		view.rotate(angle);
-		view.noStroke();
-		view.beginShape(PConstants.QUADS);
-		view.texture(img);
+	void display() {
+                textureMode(NORMALIZED);
+		pushMatrix();
+		translate(location.x,location.y,location.z);
+		rotate(angle);
+		noStroke();
+		beginShape(PConstants.QUADS);
+		texture(img);
 		int w = img.width/4,
 			h = img.height/4;
-		view.vertex(-w/2,-h/2,view.map(view.sin(cornerFluctuation),-1,1,-10,10),0,0);
-		view.vertex(w/2,-h/2,view.map(view.sin(cornerFluctuation+1.5),-1,1,-10,10),w,0);
-		view.vertex(w/2,h/2,view.map(view.sin(cornerFluctuation+2.4),-1,1,-10,105),w,h);
-		view.vertex(-w/2,h/2,view.map(view.sin(cornerFluctuation-1.5),-1,1,-10,10),0,h);
-		view.endShape();
-		view.fill(255,0,0);
-		view.sphere(2);
-                view.text("angle:"+nf(angle,2,1),20,0,10);
-                view.text("spin:"+nf(spin,1,5),20,40,10);
-                view.text("velocity:"+velocity,20,60,10);
-                view.popMatrix();
-		view.noTint();
+		vertex(-w/2,-h/2,map(sin(cornerFluctuation),-1,1,-10,10),0,0);
+		vertex(w/2,-h/2,map(sin(cornerFluctuation+1.5),-1,1,-10,10),w,0);
+		vertex(w/2,h/2,map(sin(cornerFluctuation+2.4),-1,1,-10,105),w,h);
+		vertex(-w/2,h/2,map(sin(cornerFluctuation-1.5),-1,1,-10,10),0,h);
+		endShape();
+                if( debug ) {
+  		  fill(255,0,0);
+  		  sphere(2);
+                  text("angle:"+nf(angle,2,1),20,0,10);
+                  text("spin:"+nf(spin,1,5),20,40,10);
+                  text("velocity:"+velocity,20,60,10);
+                }
+                popMatrix();
+		noTint();
 	}
 }  
