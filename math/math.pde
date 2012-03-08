@@ -1,3 +1,5 @@
+import controlP5.*;
+
 import processing.opengl.*;
 
 int M = 10;
@@ -9,6 +11,7 @@ float lastMouseX = -1,
       lastMouseY = -1;
 ArrayList images; // of PImages
 Leaf[] leaves = new Leaf[M];
+ControlP5 controlP5;
 
 boolean debug = true;
 float movementAngle,
@@ -20,6 +23,12 @@ void setup() {
 	frameRate(30);
 	hint(DISABLE_DEPTH_TEST);
 	//hint(ENABLE_DEPTH_SORT);
+
+        controlP5 = new ControlP5(this);
+        controlP5.setAutoInitialization(true);
+        controlP5.addSlider("distanceThreshold",10,500,distanceThreshold,20,100,40,100);
+        
+        // read images files from disk into ArrayList<PImage> images
 	images = new ArrayList();
 	for(int c=1;c < 5;c++) {
 		PImage img = loadImage("/../../resources/leaves/highres/leaves_"+nf(c,2)+".png");
@@ -27,6 +36,7 @@ void setup() {
 			break;
 		images.add(img);
 	}
+        // create leaves, random location around center of the area, pick random image from preloaded images
 	for(int i=0; i < M;i++) {
 		leaves[i] = new Leaf(
 			random(width/4,3*width/4),
@@ -38,7 +48,7 @@ void setup() {
 }
 
 void draw() {
-	background(255);
+	background(111);
 	float now = millis();
 
 	// update data
@@ -98,6 +108,7 @@ void draw() {
 		return;
 	stroke(0,0,255);
 	strokeWeight(5.0);
+        text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,50);
 	fill(255,0,0);
 	line(lastMouseX,lastMouseY,0,mouseX,mouseY,0);
 	text("mouse Y:"+mouseY,50+mouseX,-40+mouseY);
@@ -109,11 +120,27 @@ void draw() {
 	ellipse(mouseX,mouseY,20,20);
 }
 
-void mouseMoved(){
+void keyPressed() {
+  if( key == 'h' || key == 'H' ) {
+    if( controlP5.isVisible() ) {
+      debug = false;
+      controlP5.hide();
+    }else {
+      debug = true;
+      controlP5.show();
+    }
+  } else if( key == 's' || key == 'S' ) {
+    controlP5.saveProperties();
+  } else if( key == 'l' || key == 'L' ) {
+    controlP5.loadProperties();
+  }
 
 }
+void mouseMoved(){}
 
-void mousePressed() {
+void mousePressed() {}
 
+void distanceThreshold(float v){
+  distanceThreshold = v;
+  println("distanceThreshold set to: "+v);
 }
-
