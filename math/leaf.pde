@@ -3,22 +3,24 @@
 class Leaf {
 	PImage img;
 	PVector velocity ,location, acceleration,gravity;
-	float angle,spin;
+	float angle,spin,cornerFluctuation;
 	float TOPSPEED = 10.0;
 
 	Leaf(float x, float y, float z,PImage img) {
 		this.location = new PVector(x,y,z);
 		this.velocity  = new PVector(0,0,0);
 		this.acceleration  = new PVector(0.5,0.5,0.0);
-                this.gravity  = new PVector(0.0,0.0,0.5);
-		this.angle = 0;
+                this.gravity  = new PVector(0.0,0.0,4.0);
+		this.angle = this.cornerFluctuation = 0;
 		this.spin = 0.01;
 		this.img = img;
 	}
 
-	void move() {
+	void update() {
 		velocity.limit(TOPSPEED);
 		location.add(velocity);
+
+                // if leaf in the air pull it down
                 if( location.z > 0 )
                    location.sub(gravity);
 		if( velocity.x > 0 )
@@ -29,11 +31,15 @@ class Leaf {
 			velocity.y -= acceleration.y;
 		if( velocity.y < 0 )
 			velocity.y += acceleration.y;
-		if( abs(velocity.mag()) < 0.01 )
+
+                // stop movement if very small number
+		if( abs(velocity.x*velocity.y)*1000 < 100 )
 			velocity = new PVector(0,0,0);
+                
+                cornerFluctuation += 0.07;
 
 		angle += spin;
-
+                
                 // default spin deacceleration
                 if( spin > 0 ) spin -= 0.01;
                 if( spin < 0 ) spin += 0.01;
@@ -52,15 +58,16 @@ class Leaf {
 		view.texture(img);
 		int w = img.width/4,
 			h = img.height/4;
-		view.vertex(-w/2,-h/2,0,0,0);
-		view.vertex(w/2,-h/2,0,w,0);
-		view.vertex(w/2,h/2,0,w,h);
-		view.vertex(-w/2,h/2,0,0,h);
+		view.vertex(-w/2,-h/2,view.map(view.sin(cornerFluctuation),-1,1,-10,10),0,0);
+		view.vertex(w/2,-h/2,view.map(view.sin(cornerFluctuation+1.5),-1,1,-10,10),w,0);
+		view.vertex(w/2,h/2,view.map(view.sin(cornerFluctuation+2.4),-1,1,-10,105),w,h);
+		view.vertex(-w/2,h/2,view.map(view.sin(cornerFluctuation-1.5),-1,1,-10,10),0,h);
 		view.endShape();
 		view.fill(255,0,0);
 		view.sphere(2);
                 view.text("angle:"+nf(angle,2,1),20,0,10);
                 view.text("spin:"+nf(spin,1,5),20,40,10);
+                view.text("velocity:"+velocity,20,60,10);
                 view.popMatrix();
 		view.noTint();
 	}

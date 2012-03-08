@@ -1,9 +1,9 @@
 import processing.opengl.*;
 
-int M = 1;
+int M = 10;
 float distanceThreshold = 100,
       movementThreshold = 20;
-float updateIntervalMillis = 100, lastUpdateMillis = millis();
+float updateIntervalMillis = 25, lastUpdateMillis = millis();
 
 float lastMouseX = -1,
       lastMouseY = -1;
@@ -75,7 +75,7 @@ void draw() {
                             
                         // closer the angle is to 90 apply more rotation
                         float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
-                        float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,10);
+                        float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,25);
                         if( distance < distanceThreshold ) {
                                 float distanceFactor = map(distance,0,distanceThreshold,1,2);
 				leaf.velocity.x += (dx/30)*distanceFactor;
@@ -89,7 +89,7 @@ void draw() {
 	
 	// draw video frame, leaves, and mask
 	for (int i = leaves.length-1; i >= 0; i--) {
-                 leaves[i].move();
+                leaves[i].update();
 		leaves[i].display(this);
         }
 		
