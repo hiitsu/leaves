@@ -3,7 +3,7 @@ import processing.opengl.*;
 int M = 1;
 float distanceThreshold = 100,
       movementThreshold = 20;
-float updateIntervalMillis = 50, lastUpdateMillis = millis();
+float updateIntervalMillis = 100, lastUpdateMillis = millis();
 
 float lastMouseX = -1,
       lastMouseY = -1;
@@ -11,7 +11,9 @@ ArrayList images; // of PImages
 Leaf[] leaves = new Leaf[M];
 
 boolean debug = true;
-float movementAngle,forceAngle;
+float movementAngle,
+      forceAngle,
+      normalizedForceAngle;
 
 void setup() {
 	size(800, 600,OPENGL);
@@ -19,7 +21,7 @@ void setup() {
 	hint(DISABLE_DEPTH_TEST);
 	//hint(ENABLE_DEPTH_SORT);
 	images = new ArrayList();
-	for(int c=1;;c++) {
+	for(int c=1;c < 5;c++) {
 		PImage img = loadImage("/../../resources/leaves/highres/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
@@ -27,8 +29,8 @@ void setup() {
 	}
 	for(int i=0; i < M;i++) {
 		leaves[i] = new Leaf(
-			random(0,width),
-			random(0,height),
+			random(width/4,3*width/4),
+			random(height/4,3*height/4),
 			0.0,
 			(PImage)images.get(int(random(0,images.size())))
 		);
@@ -56,9 +58,20 @@ void draw() {
 			float distance = dist(leaf.location.x,leaf.location.y, mouseX, mouseY),
 				dx = (leaf.location.x-mouseX),
 				dy = (leaf.location.y-mouseY);
-                        float normalizedForceAngle = forceAngle = PVector.angleBetween(movementVector,vect);
+                        normalizedForceAngle = forceAngle = PVector.angleBetween(movementVector,vect);
                         if( forceAngle > (PI/2) )
                             normalizedForceAngle = (PI/2)-(forceAngle%(PI/2));
+                        
+                        // determine the rotation direction
+                        float rotationDirection = 1;
+                        if( leaf.location.x < mouseX && leaf.location.y < mouseY && movementAngle < 0 && movementAngle > -90 )
+                            rotationDirection = -1;
+                        else if( leaf.location.x < mouseX && leaf.location.y > mouseY && movementAngle > 0 && movementAngle < 90 )
+                            rotationDirection = -1;
+                        else if( leaf.location.x > mouseX && leaf.location.y > mouseY && movementAngle > 90 && movementAngle < 180 )
+                            rotationDirection = -1;
+                        else if( leaf.location.x > mouseX && leaf.location.y < mouseY && movementAngle > -180 && movementAngle < -90 )
+                            rotationDirection = -1;
                             
                         // closer the angle is to 90 apply more rotation
                         float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
@@ -67,7 +80,7 @@ void draw() {
                                 float distanceFactor = map(distance,0,distanceThreshold,1,2);
 				leaf.velocity.x += (dx/30)*distanceFactor;
 				leaf.velocity.y += (dy/30)*distanceFactor;
-                                leaf.spin += (rotationFactor/4)*distanceFactor;
+                                leaf.spin += (rotationFactor/6)*rotationDirection;
                                 leaf.location.z += zFactor*distanceFactor;
 			}
 			
@@ -87,8 +100,10 @@ void draw() {
 	strokeWeight(5.0);
 	fill(255,0,0);
 	line(lastMouseX,lastMouseY,0,mouseX,mouseY,0);
+	text("mouse Y:"+mouseY,50+mouseX,-40+mouseY);
 	text("movement angle:"+nf(degrees(movementAngle),1,2),50+mouseX,mouseY);
 	text("force angle:"+nf(degrees(forceAngle),1,2),50+mouseX,40+mouseY);
+	text("normalized force angle:"+nf(degrees(normalizedForceAngle),1,2),50+mouseX,80+mouseY);
 	strokeWeight(2.0);
 	fill(255,0,0);
 	ellipse(mouseX,mouseY,20,20);

@@ -31,11 +31,15 @@ class Leaf {
 			velocity.y += acceleration.y;
 		if( abs(velocity.mag()) < 0.01 )
 			velocity = new PVector(0,0,0);
+
 		angle += spin;
+
+                // default spin deacceleration
                 if( spin > 0 ) spin -= 0.01;
                 if( spin < 0 ) spin += 0.01;
-                if( spin*1000 < 10 ) spin = 0;
-		println(velocity);
+                
+                // stop spinning if very small number
+                if( abs(spin)*1000 < 10 ) spin = 0;
 	}
 
 	void display(PApplet view) {
@@ -55,7 +59,9 @@ class Leaf {
 		view.endShape();
 		view.fill(255,0,0);
 		view.sphere(2);
-		view.popMatrix();
+                view.text("angle:"+nf(angle,2,1),20,0,10);
+                view.text("spin:"+nf(spin,1,5),20,40,10);
+                view.popMatrix();
 		view.noTint();
 	}
 }  
