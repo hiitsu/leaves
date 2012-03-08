@@ -3,7 +3,8 @@
 class Leaf {
 	PImage img;
 	PVector velocity ,location, acceleration,gravity;
-	float angle,spin,cornerFluctuation;
+	float angle,spin;
+        float[][] fluctuations = new float[4][3]; // four corners, phase, shift speed, and z-range
 	float TOPSPEED = 10.0;
 
 	Leaf(float x, float y, float z,PImage img) {
@@ -11,11 +12,21 @@ class Leaf {
 		this.velocity  = new PVector(0,0,0);
 		this.acceleration  = new PVector(0.5,0.5,0.0);
                 this.gravity  = new PVector(0.0,0.0,4.0);
-		this.angle = this.cornerFluctuation = 0;
+		this.angle = 0;
 		this.spin = 0.01;
 		this.img = img;
+                randomizeFluctuation();
 	}
-
+        
+        void randomizeFluctuation(){
+          for(int i=0; i <4; i++){
+            fluctuations[i][0] = random(0,PI/2);
+            fluctuations[i][1] = random(0.01,0.20);
+            fluctuations[i][2] = random(1,20);
+          }
+      
+        }
+        
 	void update() {
 		velocity.limit(TOPSPEED);
 		location.add(velocity);
@@ -36,7 +47,8 @@ class Leaf {
 		if( abs(velocity.x*velocity.y)*1000 < 100 )
 			velocity = new PVector(0,0,0);
                 
-                cornerFluctuation += 0.07;
+                for(int i=0; i <4; i++)
+                  fluctuations[i][0] += fluctuations[i][1];
 
 		angle += spin;
                 
@@ -58,10 +70,10 @@ class Leaf {
 		texture(img);
 		int w = img.width/4,
 			h = img.height/4;
-		vertex(-w/2,-h/2,map(sin(cornerFluctuation),-1,1,-10,10),0,0);
-		vertex(w/2,-h/2,map(sin(cornerFluctuation+1.5),-1,1,-10,10),w,0);
-		vertex(w/2,h/2,map(sin(cornerFluctuation+2.4),-1,1,-10,10),w,h);
-		vertex(-w/2,h/2,map(sin(cornerFluctuation-1.5),-1,1,-10,10),0,h);
+		vertex(-w/2,-h/2,map(sin(fluctuations[0][0]),-1,1,-fluctuations[0][2],fluctuations[0][2]),0,0);
+		vertex(w/2,-h/2,map(sin(fluctuations[1][0]),-1,1,-fluctuations[1][2],fluctuations[1][2]),w,0);
+		vertex(w/2,h/2,map(sin(fluctuations[2][0]),-1,1,-fluctuations[2][2],fluctuations[2][2]),w,h);
+		vertex(-w/2,h/2,map(sin(fluctuations[3][0]),-1,1,-fluctuations[3][2],fluctuations[3][2]),0,h);
 		endShape();
                 if( debug ) {
   		  fill(255,0,0);
