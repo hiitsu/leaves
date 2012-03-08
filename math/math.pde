@@ -1,19 +1,24 @@
+import processing.net.*;
 import controlP5.*;
-
 import processing.opengl.*;
 
 int M = 100;
-float distanceThreshold = 100,
-      movementThreshold = 20;
-float updateIntervalMillis = 25, lastUpdateMillis = millis();
-
+float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
+      movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
+      updateInterval = 25,         // how often leaves should be update
+      lastUpdateMillis = millis(), // timing helper variable
+      topVelocity = 10,            // leaf max XY speed
+      topSpinSpeed = 0.2;           // leaf max rotation speed
+ 
+PVector gravity = new PVector(0,0,4);                // how fast the leaves come down
+     
 float lastMouseX = -1,
       lastMouseY = -1;
 ArrayList images; // of PImages
 Leaf[] leaves = new Leaf[M];
 ControlP5 controlP5;
 
-//Client client;
+Client client;
 
 boolean debug = true;
 float movementAngle,
@@ -21,18 +26,22 @@ float movementAngle,
       normalizedForceAngle;
 
 void setup() {
-	size(1024, 768,OPENGL);
+	size(800, 600,OPENGL);
 	frameRate(30);
 	hint(DISABLE_DEPTH_TEST);
 	//hint(ENABLE_DEPTH_SORT);
 
         controlP5 = new ControlP5(this);
         controlP5.setAutoInitialization(true);
-        controlP5.addSlider("distanceThreshold",10,500,distanceThreshold,20,100,40,100);
-        
+        controlP5.addSlider("distanceThreshold",5,200,distanceThreshold,20,60,30,80);
+        controlP5.addSlider("movementThreshold",1,100,movementThreshold,20,160,30,80);
+        controlP5.addSlider("updateInterval",5,100,updateInterval,20,260,30,80);
+        controlP5.addSlider("topSpinSpeed",0.001,1.0,topSpinSpeed,20,360,30,80);
+        controlP5.addSlider("topVelocity",5,50,topVelocity,20,460,30,80);
+       
         // read images files from disk into ArrayList<PImage> images
 	images = new ArrayList();
-	for(int c=1;c < 25;c++) {
+	for(int c=1;c < 5;c++) {
 		PImage img = loadImage("/../../resources/leaves/highres/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
@@ -57,7 +66,7 @@ void draw() {
 	// update data
         PVector movementVector = new PVector(lastMouseX-mouseX,lastMouseY-mouseY,0);
         float movementMagnitude = movementVector.mag();
-	if( now - lastUpdateMillis > updateIntervalMillis && 
+	if( now - lastUpdateMillis > updateInterval && 
                 movementMagnitude > movementThreshold ) {
 		
                 lastUpdateMillis = now;
@@ -93,8 +102,9 @@ void draw() {
                                 float distanceFactor = map(distance,0,distanceThreshold,1,2);
 				leaf.velocity.x += (dx/30)*distanceFactor;
 				leaf.velocity.y += (dy/30)*distanceFactor;
-                                leaf.spin += (rotationFactor/6)*rotationDirection;
+                                leaf.spinSpeed += (rotationFactor/6)*rotationDirection;
                                 leaf.location.z += zFactor*distanceFactor;
+                                leaf.increaseFluctuation(distanceFactor*5);
 			}
 			
 		}
@@ -111,7 +121,7 @@ void draw() {
 		return;
 	stroke(0,0,255);
 	strokeWeight(5.0);
-        text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,50);
+        text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
 	fill(255,0,0);
 	line(lastMouseX,lastMouseY,0,mouseX,mouseY,0);
 	text("mouse Y:"+mouseY,50+mouseX,-40+mouseY);
@@ -147,9 +157,25 @@ void distanceThreshold(float v){
   distanceThreshold = v;
   println("distanceThreshold set to: "+v);
 }
-/*
+
+void movementThreshold(float v){
+  movementThreshold = v;
+  println("movementThreshold set to: "+v);
+}
+void updateInterval(float v){
+  updateInterval = v;
+  println("updateInterval set to: "+v);
+}
+void topSpinSpeed(float v){
+  topSpinSpeed = v;
+  println("topSpinSpeed set to: "+v);
+}
+void topVelocity(float v){
+  topVelocity = v;
+  println("topVelocity set to: "+v);
+}
+
 void clientEvent(Client c) {
-  data = client.read();
+  int data = client.read();
   println("Server Says:  "+data);
 }
-*/
