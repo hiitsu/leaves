@@ -17,7 +17,10 @@ class Leaf {
 		this.img = img;
                 randomizeFluctuation();
 	}
-        
+	Leaf(float x, float y, float z,float fluct,PImage img) {
+            this(x,y,z,img);
+            increaseFluctuation(fluct);
+        }        
         void randomizeFluctuation(){
           for(int i=0; i <4; i++){
             fluctuations[i][0] = random(0,PI/2);
@@ -29,7 +32,7 @@ class Leaf {
            for(int i=0; i <4; i++) {
               float v = fluctuations[i][2];
               v += factor;
-              if( v > 10 ) v = 10;
+              if( v > 30 ) v = 30;
               fluctuations[i][2] = v;
            }
         }

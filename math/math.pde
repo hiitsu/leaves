@@ -17,9 +17,8 @@ float lastMouseX = -1,
       lastMouseY = -1;
 ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
-ArrayList locations; // of float[2], leaf initial locations
 ControlP5 controlP5;
-PImage backgroundImage;
+PImage backgroundImage,overlayImage;
 Client client;
 
 boolean debug = true, wind = true;
@@ -33,6 +32,7 @@ void setup() {
 	frameRate(30);
 	hint(DISABLE_DEPTH_TEST);
         backgroundImage = loadImage("/../../resources/background.jpg");
+        overlayImage = loadImage("/../../resources/overlay.png");
 	// call this before setLeaves
 	loadImages(10);
 
@@ -124,16 +124,11 @@ void draw() {
               windGenerator += 0.0001;
               for (int i = leaves.size()-1; i >= 0; i--) {
                   Leaf leaf = (Leaf)leaves.get(i);
-                  
-                  // randomize point around the center where the wind is blowing the leaf
-                  float px = ((float[])locations.get(i))[0];
-                  float py = ((float[])locations.get(i))[1];
-                  
                   float forceRandomizer = random(0.01,0.1);
                   float lx = leaf.location.x;
                   float ly = leaf.location.y;
-                  float dx = (px-lx);
-                  float dy = (py-ly);
+                  float dx = (width/2-lx);
+                  float dy = (height/2-ly);
                   if( dx*dy > 20 ) {
                     PVector v = new PVector(dx,dy,0);
                     v.normalize();
@@ -152,10 +147,22 @@ void draw() {
 	}
       
 	// draw mask
-        
+        textureMode(NORMALIZED);
+        pushMatrix();
+	translate(width/2,height/2,backgroundZ);
+	beginShape(PConstants.QUADS);
+	texture(overlayImage);
+	int ww = overlayImage.width,
+		hh = overlayImage.height;
+	vertex(-ww/2,-hh/2,100,0,0);
+	vertex(ww/2,-hh/2,100,ww,0);
+	vertex(ww/2,hh/2,100,ww,hh);
+	vertex(-ww/2,hh/2,100,0,hh);
+	endShape();
+        popMatrix();        
         
 	// drawing debug stuff, depth sort not needed
-	if( !debug ) {
+	if( debug ) {
     	stroke(0,0,255);
     	strokeWeight(5.0);
         text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
@@ -168,7 +175,7 @@ void draw() {
     	strokeWeight(2.0);
     	fill(255,0,0);
     	ellipse(mouseX,mouseY,20,20);
-  }
+        }
   //popMatrix();
 }
 
@@ -259,15 +266,12 @@ void loadImages(int maxImages) {
 synchronized void setLeaves(int count){
 	if( leaves == null ) {
 	        leaves = new ArrayList(count);
-                locations = new ArrayList(count);
         }
 	leaves.clear();
-        locations.clear();
 	while( leaves.size() < count ) {
                 float x = random(0,width);
                 float y = random(0,height);
-                locations.add( new float[] { x,y });
-		leaves.add(new Leaf(x,y,random(10,1000),(PImage)images.get(int(random(0,images.size())))));
+		leaves.add(new Leaf(x,y,random(10,1000),random(5,20),(PImage)images.get(int(random(0,images.size())))));
     }
 }
 
