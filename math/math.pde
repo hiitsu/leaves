@@ -2,14 +2,15 @@ import processing.net.*;
 import controlP5.*;
 import processing.opengl.*;
 
-int leafCount = 100;
+int leafCount = 100,leafSize = 5;
 float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
       updateInterval = 25,         // how often leaves should be update
       lastUpdateMillis = millis(), // timing helper variable
+      windWaitMillis = 2000,        // waiting period before wind kicks in
       topVelocity = 10,            // leaf max XY speed
-      topSpinSpeed = 0.2;           // leaf max rotation speed
- 
+      topSpinSpeed = 0.2,           // leaf max rotation speed
+      backgroundZ = -50;           // background image place in z-axis
 PVector gravity = new PVector(0,0,4);                // how fast the leaves come down
      
 float lastMouseX = -1,
@@ -17,10 +18,10 @@ float lastMouseX = -1,
 ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
 ControlP5 controlP5;
-
+PImage backgroundImage;
 Client client;
 
-boolean debug = true;
+boolean debug = true, wind = true;
 float movementAngle,
       forceAngle,
       normalizedForceAngle;
@@ -29,7 +30,7 @@ void setup() {
 	size(1024, 768,OPENGL);
 	frameRate(30);
 	hint(DISABLE_DEPTH_TEST);
-
+        backgroundImage = loadImage("/../../resources/background.jpg");
 	// call this before setLeaves
 	loadImages(10);
 
@@ -45,18 +46,37 @@ void setup() {
 
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
-	controlP5.addSlider("leafCount",1,500,leafCount,width-50,60,30,80);
+	controlP5.addToggle("wind",wind,width-50,60,30,30);
+	controlP5.addSlider("leafCount",1,500,leafCount,width-50,110,30,80);
+	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
 
 	setLeaves(leafCount);
 }
 
 void draw() {
-	background(111);
+
+	background(0);
+        textureMode(NORMALIZED);
+        pushMatrix();
+	translate(width/2,height/2,backgroundZ);
+	beginShape(PConstants.QUADS);
+	texture(backgroundImage);
+	int w = backgroundImage.width,
+		h = backgroundImage.height;
+	vertex(-w/2,-h/2,0,0,0);
+	vertex(w/2,-h/2,0,w,0);
+	vertex(w/2,h/2,0,w,h);
+	vertex(-w/2,h/2,0,0,h);
+	endShape();
+        popMatrix();
+        
 	float now = millis();
 
 	// update data
 	PVector movementVector = new PVector(lastMouseX-mouseX,lastMouseY-mouseY,0);
 	float movementMagnitude = movementVector.mag();
+
+        // enough time elapsed from last update and big enough movement happening?
 	if( now - lastUpdateMillis > updateInterval && movementMagnitude > movementThreshold ) {
 		lastUpdateMillis = now;
 		lastMouseX = mouseX;
@@ -98,6 +118,9 @@ void draw() {
 			
 		}
 	}
+        else if( wind && now - lastUpdateMillis > windWaitMillis ) {
+          
+        }
 
 	// draw video frame, leaves, and mask
 	for (int i = leaves.size()-1; i >= 0; i--) {
@@ -170,6 +193,15 @@ void leafCount(int v){
 	setLeaves(leafCount);
 	println("leafCount set to: "+v);
 }
+void leafSize(int v){
+	leafSize = v;
+	setLeaves(leafCount);
+	println("leafSize set to: "+v);
+}
+void wind(boolean flag){
+	println("wind set to: "+flag);
+        wind = flag;
+}
 void network(boolean flag){
 	println("network set to: "+flag);
 	if( flag ) {
@@ -203,15 +235,12 @@ void loadImages(int maxImages) {
 synchronized void setLeaves(int count){
 	if( leaves == null )
 		leaves = new ArrayList(count);
-	while( leaves.size() > 0 && leaves.size() > count )
-		leaves.remove(0);
-	while( leaves.size() < count ) 
-		leaves.add(new Leaf(
-			random(width/4,3*width/4),
-			random(height/4,3*height/4),
-			0.0,
-			(PImage)images.get(int(random(0,images.size())))
-		));
+	leaves.clear();
+	while( leaves.size() < count ) {
+                float x = random(width/4,3*width/4);
+                float y = random(height/4,3*height/4);
+		leaves.add(new Leaf(x,y,0.0,(PImage)images.get(int(random(0,images.size())))));
+    }
 }
 
 void clientEvent(Client c) {

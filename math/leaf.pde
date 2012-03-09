@@ -11,7 +11,7 @@ class Leaf {
 		this.location = new PVector(x,y,z);
 		this.velocity  = new PVector(0,0,0);
 		this.acceleration  = new PVector(0.5,0.5,0.0);
-                this.sizeFactor = (int)random(3,8);
+                this.sizeFactor = (int)random(1+(int)leafSize/2,leafSize*2);
 		this.angle = 0;
 		this.spinSpeed = 0.01;
 		this.img = img;
@@ -57,15 +57,19 @@ class Leaf {
 			velocity.y += acceleration.y;
 
                 // stop movement if very small number
-		if( abs(velocity.x*velocity.y)*1000 < 100 )
+		if( abs(velocity.x*velocity.y)*1000 < 200 )
 			velocity = new PVector(0,0,0);
                 
                 reduceFluctuation();
                 for(int i=0; i <4; i++)
                   fluctuations[i][0] += fluctuations[i][1];
 
-                if( spinSpeed > topSpinSpeed )
-                  spinSpeed = topSpinSpeed;
+                if( abs(spinSpeed) > topSpinSpeed ) {
+                  if( spinSpeed < 0 )  
+                    spinSpeed = -1*topSpinSpeed;
+                  else
+                    spinSpeed = topSpinSpeed;
+                }
 
 		angle += spinSpeed;
                 
@@ -92,6 +96,7 @@ class Leaf {
 		vertex(w/2,h/2,map(sin(fluctuations[2][0]),-1,1,-fluctuations[2][2],fluctuations[2][2]),w,h);
 		vertex(-w/2,h/2,map(sin(fluctuations[3][0]),-1,1,-fluctuations[3][2],fluctuations[3][2]),0,h);
 		endShape();
+/*
                 if( debug ) {
   		  fill(255,0,0);
   		  sphere(2);
@@ -99,7 +104,7 @@ class Leaf {
                   text("spin:"+nf(spinSpeed,1,5),20,40,10);
                   text("velocity:"+velocity,20,60,10);
                 }
-                popMatrix();
+*/              popMatrix();
 		noTint();
 	}
 }  
