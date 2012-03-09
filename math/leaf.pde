@@ -61,9 +61,12 @@ class Leaf {
 			velocity = new PVector(0,0,0);
                 
                 reduceFluctuation();
+                
+                // change phase by adding shift increment
                 for(int i=0; i <4; i++)
                   fluctuations[i][0] += fluctuations[i][1];
 
+                // dont spin too fast
                 if( abs(spinSpeed) > topSpinSpeed ) {
                   if( spinSpeed < 0 )  
                     spinSpeed = -1*topSpinSpeed;
