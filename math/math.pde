@@ -17,6 +17,7 @@ float lastMouseX = -1,
       lastMouseY = -1;
 ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
+ArrayList locations; // of float[2], leaf initial locations
 ControlP5 controlP5;
 PImage backgroundImage;
 Client client;
@@ -120,18 +121,27 @@ void draw() {
 		}
 	}
         else if( wind && now - lastUpdateMillis > windWaitMillis ) {
+              windGenerator += 0.0001;
               for (int i = leaves.size()-1; i >= 0; i--) {
                   Leaf leaf = (Leaf)leaves.get(i);
-                  leaf.increaseFluctuation(0.1);
-                  // randomize point around the center where the wind is blowing the leaf
-                  float px = random(0,width);
-                  float py = random(0,height);
                   
-                  float force = random(0.00001,0.0001);
+                  // randomize point around the center where the wind is blowing the leaf
+                  float px = ((float[])locations.get(i))[0];
+                  float py = ((float[])locations.get(i))[1];
+                  
+                  float forceRandomizer = random(0.01,0.1);
                   float lx = leaf.location.x;
                   float ly = leaf.location.y;
-                  PVector v = new PVector((px-lx)*force,(py-ly)*force,random(0.01,0.1));
-                  leaf.velocity.add(v);
+                  float dx = (px-lx);
+                  float dy = (py-ly);
+                  if( dx*dy > 20 ) {
+                    PVector v = new PVector(dx,dy,0);
+                    v.normalize();
+                    v.mult((sin(windGenerator)+1)*forceRandomizer);
+                    //v.z = random(0.1,1);
+                    leaf.velocity.add(v);
+                    //leaf.increaseFluctuation(forceRandomizer);
+                  }
               }
         }
 
@@ -247,13 +257,17 @@ void loadImages(int maxImages) {
 
 // create leaves, random location around center of the area, pick random image from preloaded images
 synchronized void setLeaves(int count){
-	if( leaves == null )
-		leaves = new ArrayList(count);
+	if( leaves == null ) {
+	        leaves = new ArrayList(count);
+                locations = new ArrayList(count);
+        }
 	leaves.clear();
+        locations.clear();
 	while( leaves.size() < count ) {
                 float x = random(0,width);
                 float y = random(0,height);
-		leaves.add(new Leaf(x,y,0.0,(PImage)images.get(int(random(0,images.size())))));
+                locations.add( new float[] { x,y });
+		leaves.add(new Leaf(x,y,random(10,1000),(PImage)images.get(int(random(0,images.size())))));
     }
 }
 
