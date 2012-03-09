@@ -22,6 +22,7 @@ PImage backgroundImage;
 Client client;
 
 boolean debug = true, wind = true;
+float windGenerator = 0.0;
 float movementAngle,
       forceAngle,
       normalizedForceAngle;
@@ -54,7 +55,8 @@ void setup() {
 }
 
 void draw() {
-
+        //pushMatrix();
+        //camera(width/2,height/2,1000.0,width/2,height/2,0.0,0,1,0);
 	background(0);
         textureMode(NORMALIZED);
         pushMatrix();
@@ -104,7 +106,7 @@ void draw() {
 			else if( leaf.location.x > mouseX && leaf.location.y < mouseY && movementAngle > -180 && movementAngle < -90 )
 				rotationDirection = -1;
 				
-			// closer the angle is to 90 apply more rotation
+			// apply more rotation when closer to 90degree angle
 			float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
 			float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,25);
 			if( distance < distanceThreshold ) {
@@ -115,11 +117,22 @@ void draw() {
 					leaf.location.z += zFactor*distanceFactor;
 					leaf.increaseFluctuation(distanceFactor*5);
 			}
-			
 		}
 	}
         else if( wind && now - lastUpdateMillis > windWaitMillis ) {
-          
+              for (int i = leaves.size()-1; i >= 0; i--) {
+                  Leaf leaf = (Leaf)leaves.get(i);
+                  leaf.increaseFluctuation(0.1);
+                  // randomize point around the center where the wind is blowing the leaf
+                  float px = random(0,width);
+                  float py = random(0,height);
+                  
+                  float force = random(0.00001,0.0001);
+                  float lx = leaf.location.x;
+                  float ly = leaf.location.y;
+                  PVector v = new PVector((px-lx)*force,(py-ly)*force,random(0.01,0.1));
+                  leaf.velocity.add(v);
+              }
         }
 
 	// draw video frame, leaves, and mask
@@ -132,20 +145,21 @@ void draw() {
         
         
 	// drawing debug stuff, depth sort not needed
-	if( !debug )
-		return;
-	stroke(0,0,255);
-	strokeWeight(5.0);
+	if( !debug ) {
+    	stroke(0,0,255);
+    	strokeWeight(5.0);
         text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
-	fill(255,0,0);
-	line(lastMouseX,lastMouseY,0,mouseX,mouseY,0);
-	text("mouse Y:"+mouseY,50+mouseX,-40+mouseY);
-	text("movement angle:"+nf(degrees(movementAngle),1,2),50+mouseX,mouseY);
-	text("force angle:"+nf(degrees(forceAngle),1,2),50+mouseX,40+mouseY);
-	text("normalized force angle:"+nf(degrees(normalizedForceAngle),1,2),50+mouseX,80+mouseY);
-	strokeWeight(2.0);
-	fill(255,0,0);
-	ellipse(mouseX,mouseY,20,20);
+    	fill(255,0,0);
+    	line(lastMouseX,lastMouseY,0,mouseX,mouseY,0);
+    	text("mouse Y:"+mouseY,50+mouseX,-40+mouseY);
+    	text("movement angle:"+nf(degrees(movementAngle),1,2),50+mouseX,mouseY);
+    	text("force angle:"+nf(degrees(forceAngle),1,2),50+mouseX,40+mouseY);
+    	text("normalized force angle:"+nf(degrees(normalizedForceAngle),1,2),50+mouseX,80+mouseY);
+    	strokeWeight(2.0);
+    	fill(255,0,0);
+    	ellipse(mouseX,mouseY,20,20);
+  }
+  //popMatrix();
 }
 
 void keyPressed() {
@@ -237,8 +251,8 @@ synchronized void setLeaves(int count){
 		leaves = new ArrayList(count);
 	leaves.clear();
 	while( leaves.size() < count ) {
-                float x = random(width/4,3*width/4);
-                float y = random(height/4,3*height/4);
+                float x = random(0,width);
+                float y = random(0,height);
 		leaves.add(new Leaf(x,y,0.0,(PImage)images.get(int(random(0,images.size())))));
     }
 }
