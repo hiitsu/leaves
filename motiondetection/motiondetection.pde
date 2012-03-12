@@ -1,7 +1,10 @@
 import processing.net.*;
+import controlP5.*;
+import processing.net.*;
 import processing.video.*;
 import s373.flob.*;
 
+ControlP5 controlP5;
 Server server;
 Capture cam;
 Flob flob;
@@ -9,21 +12,23 @@ ArrayList blobs;
 int videotex = 2; //case 0: videotex = videoimg;//case 1: videotex = videotexbin; 
 //case 2: videotex = videotexmotion//case 3: videotex = videoteximgmotion; 
 int fade = 25;
-int threshold = 55;
+int edgeThreshold = 55;
 int minimumArea = 16*16,
     maximumArea = 320*240; // quarter screen blob is still valid
-
+int leftLimit = 0, rightLimit = 640, topLimit = 0, bottomLimit = 0;
 float updateIntervalMillis = 100;
 float lastUpdateMillis = 0,currentMillis = 0;
 float cx,cy,ox,oy;
-int leftLimit = 0, rightLimit = 640;
+
 
 void setup() {
 //  if( enableServer ) {    server = new Server(this,12345);  }
   println(Capture.list());
-  size(640,480);
+  size(800,600);
   rightLimit = width;
-  int FPS = 60;
+  topLimit = height;
+  int FPS = 20;
+  server = new Server(this, 12345);
   cam = new Capture(this,160,120, FPS);
 
   // setup the detection parameters
@@ -35,19 +40,33 @@ void setup() {
   flob.setFade(fade);
   flob.setMirror(false,false);
 
+        controlP5 = new ControlP5(this);
+	controlP5.setAutoInitialization(true);
+
+	// controls on the left side
+	controlP5.addSlider("updateIntervalMillis",20,300,updateIntervalMillis,20,60,30,80);
+	controlP5.addSlider("minimumArea",10,300,minimumArea,20,160,30,80);
+	controlP5.addSlider("maximumArea",20,1000,maximumArea,20,260,30,80);
+	controlP5.addSlider("edgeThreshold",1,200,edgeThreshold,20,360,30,80);
+	controlP5.addSlider("fade",5,200,fade,20,460,30,80);
+
+	// controls on the right side
+	controlP5.addSlider2D("leftTop",0,width/2,0,height/2,10,10,width-90,110,80,80);
+	controlP5.addSlider2D("bottomRight",width/2,width,height/2,height,width-10,height-10,width-90,210,80,80);
+        
   lastUpdateMillis = millis();
   currentMillis = millis();
 }
 
 void draw() {
   if (cam.available() == true) {
-    flob.setThresh(threshold);
+    flob.setThresh(edgeThreshold);
     cam.read();
     blobs = flob.calc(flob.binarize(cam));
   
     currentMillis = millis();
     background(0);
-    image(flob.getSrcImage(),0,0,width,height); // absolute difference image
+    image(flob.getSrcImage(),80,320-30,320,240); // absolute difference image
     
     int tracked = -1;
     
@@ -94,102 +113,30 @@ void draw() {
       }
     }
     
-    image(cam,0,140,160,120);
-
-    strokeWeight(3);
-    fill(0,255,0,122);
-    stroke(0,255,0,122);
-    float l = map(leftLimit,0,width,0,160);
-    line(l,140,l,260);
-    line(leftLimit,0,leftLimit,height);
-    text("leftLimit",leftLimit,height/2+20);
-    stroke(0,111,255,172);
-    fill(0,111,255,172);
-    line(rightLimit,0,rightLimit,height);
-    float r = map(rightLimit,0,width,0,160);
-    line(r,140,r,260);
-    text("rightLimit",rightLimit,height/2+40);
-  
-    fill(255,0,0,122);
-    stroke(255,0,0,122);
-    strokeWeight(8);
-    textAlign(CENTER);
-    line(cx,0,cx,height);
-    text("poster",cx,height/2);
-      
-    strokeWeight(1);
-    rectMode(CORNER);
-    noFill();
-    textAlign(LEFT);
-    drawThreshold(0,0);
-    drawMinArea(0,20);
-    drawMaxArea(0,40);
-    drawUpdateIntervalMillis(0,60);
-  }
+    image(cam,80,10,320,240);
+ 
+ }
 
 }
-
-void mousePressed() {
-    if(mouseY > 0 && mouseY < 20) {
-        threshold = mouseX;
-    }
-    if(mouseY > 20 && mouseY < 40) {
-        minimumArea = mouseX*40;
-    }
-    if(mouseY > 40 && mouseY < 60) {
-        maximumArea = mouseX*480;
-    }
-    if( mouseY > 60 && mouseY < 80) {
-        updateIntervalMillis = mouseX;
-    }
-    if( mouseY > 140 ) {
-        if( mouseButton == LEFT ) {
-          if( mouseX < rightLimit )
-            leftLimit = mouseX;
-        }
-        else if( mouseButton == RIGHT ) {
-          if( mouseX > leftLimit )
-            rightLimit = mouseX;
-        }
-    }
+void updateIntervalMillis(float v){
+	updateIntervalMillis = v;
+	println("updateIntervalMillis set to: "+v);
 }
-
-
-void drawThreshold(int x,int y) {
-  pushMatrix();
-  translate(x,y);
-  fill(0,123,155,122);
-  rect(0,0,threshold,20);
-  fill(255,0,0);
-  text("Luminance Threshold: "+threshold,0,10);
-  popMatrix();
+void edgeThreshold(int v){
+	edgeThreshold = v;
+	println("edgeThreshold set to: "+v);
 }
-void drawMinArea(int x,int y) {
-  pushMatrix();
-  translate(x,y);
-  fill(0,123,0,122);
-  rect(0,0,minimumArea/40,20);
-  fill(255,0,255);
-  text("Minimum Area (px): "+minimumArea+", sqrt (px): "+int(sqrt(minimumArea)),0,10);
-  popMatrix();
+void minimumArea(int v){
+	minimumArea = v;
+	println("minimumArea set to: "+v);
 }
-void drawMaxArea(int x,int y) {
-  pushMatrix();
-  translate(x,y);
-  fill(0,123,155,122);
-  rect(0,0,maximumArea/480,20);
-  fill(255,0,0);
-  text("Maximum Area (px): "+maximumArea+", sqrt (px): "+int(sqrt(maximumArea)),0,10);
-  popMatrix();
+void maximumArea(int v){
+	maximumArea = v;
+	println("maximumArea set to: "+v);
 }
-void drawUpdateIntervalMillis(int x,int y) {
-  pushMatrix();
-  translate(x,y);
-  fill(0,123,0,122);
-  rect(0,0,updateIntervalMillis,20);
-  fill(255,0,255);
-  text("Update Client Interval (ms): "+updateIntervalMillis,0,10);
-  popMatrix();
+void fade(int v){
+	fade = v;
+	println("fade set to: "+v);
+        flob.setFade(fade);
 }
-
 
