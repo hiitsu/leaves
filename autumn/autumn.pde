@@ -1,3 +1,4 @@
+import java.nio.*;
 import processing.net.*;
 import controlP5.*;
 import processing.opengl.*;
@@ -15,6 +16,7 @@ PVector gravity = new PVector(0,0,4);                // how fast the leaves come
      
 float lastMouseX = -1,
       lastMouseY = -1;
+ArrayList forceCoordinates = new ArrayList(); // of float[]
 ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
 ControlP5 controlP5;
@@ -29,10 +31,10 @@ float movementAngle,
 
 void setup() {
 	size(1024, 768,OPENGL);
-	frameRate(30);
+	frameRate(50);
 	hint(DISABLE_DEPTH_TEST);
-        backgroundImage = loadImage("resources/background.jpg");
-        overlayImage = loadImage("resources/overlay.png");
+	backgroundImage = loadImage("resources/background.jpg");
+	overlayImage = loadImage("resources/overlay.png");
 	// call this before setLeaves
 	loadImages(10);
 
@@ -56,11 +58,12 @@ void setup() {
 }
 
 void draw() {
-        //pushMatrix();
-        //camera(width/2,height/2,1000.0,width/2,height/2,0.0,0,1,0);
+	//pushMatrix();
+	//camera(width/2,height/2,1000.0,width/2,height/2,0.0,0,1,0);
+	
 	background(0);
-        textureMode(NORMALIZED);
-        pushMatrix();
+	textureMode(NORMALIZED);
+	pushMatrix();
 	translate(width/2,height/2,backgroundZ);
 	beginShape(PConstants.QUADS);
 	texture(backgroundImage);
@@ -71,84 +74,38 @@ void draw() {
 	vertex(w/2,h/2,0,w,h);
 	vertex(-w/2,h/2,0,0,h);
 	endShape();
-        popMatrix();
+	popMatrix();
         
 	float now = millis();
 
-	// update data
-	PVector movementVector = new PVector(lastMouseX-mouseX,lastMouseY-mouseY,0);
-	float movementMagnitude = movementVector.mag();
+	// receive movemetn vector
+	//PVector movementVector = new PVector(lastMouseX-mouseX,lastMouseY-mouseY,0);
 
-        // enough time elapsed from last update and big enough movement happening?
-	if( now - lastUpdateMillis > updateInterval && movementMagnitude > movementThreshold ) {
-		lastUpdateMillis = now;
-		lastMouseX = mouseX;
-		lastMouseY = mouseY;
-		movementAngle = atan2(movementVector.x,movementVector.y);
-
-		for (int i = leaves.size()-1; i >= 0; i--) { 
-			Leaf leaf = (Leaf) leaves.get(i);
-			PVector vect = new PVector(leaf.location.x-mouseX,leaf.location.y-mouseY);
-			float distance = dist(leaf.location.x,leaf.location.y, mouseX, mouseY),
-				dx = (leaf.location.x-mouseX),
-				dy = (leaf.location.y-mouseY);
-			normalizedForceAngle = forceAngle = PVector.angleBetween(movementVector,vect);
-			if( forceAngle > (PI/2) )
-				normalizedForceAngle = (PI/2)-(forceAngle%(PI/2));
-			
-			// determine the rotation direction
-			float rotationDirection = 1;
-			if( leaf.location.x < mouseX && leaf.location.y < mouseY && movementAngle < 0 && movementAngle > -90 )
-				rotationDirection = -1;
-			else if( leaf.location.x < mouseX && leaf.location.y > mouseY && movementAngle > 0 && movementAngle < 90 )
-				rotationDirection = -1;
-			else if( leaf.location.x > mouseX && leaf.location.y > mouseY && movementAngle > 90 && movementAngle < 180 )
-				rotationDirection = -1;
-			else if( leaf.location.x > mouseX && leaf.location.y < mouseY && movementAngle > -180 && movementAngle < -90 )
-				rotationDirection = -1;
-				
-			// apply more rotation when closer to 90degree angle
-			float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
-			float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,25);
-			if( distance < distanceThreshold ) {
-					float distanceFactor = map(distance,0,distanceThreshold,1,2);
-					leaf.velocity.x += (dx/30.0)*distanceFactor;
-					leaf.velocity.y += (dy/30.0)*distanceFactor;
-					leaf.spinSpeed += (rotationFactor/6)*rotationDirection;
-					leaf.location.z += zFactor*distanceFactor;
-					leaf.increaseFluctuation(distanceFactor*5);
-			}
-		}
-	}
-        else if( wind && now - lastUpdateMillis > windWaitMillis ) {
-              windGenerator += 0.0001;
-              for (int i = leaves.size()-1; i >= 0; i--) {
-                  Leaf leaf = (Leaf)leaves.get(i);
-                  float forceRandomizer = random(0.01,0.1);
-                  float lx = leaf.location.x;
-                  float ly = leaf.location.y;
-                  float dx = (width/2-lx);
-                  float dy = (height/2-ly);
-                  if( dx*dy > 20 ) {
-                    PVector v = new PVector(dx,dy,0);
-                    v.normalize();
-                    v.mult((sin(windGenerator)+1)*forceRandomizer);
-                    //v.z = random(0.1,1);
-                    leaf.velocity.add(v);
-                    //leaf.increaseFluctuation(forceRandomizer);
-                  }
+	// enough time elapsed from last update and big enough movement happening?
+        float elapsed = now - lastUpdateMillis;
+	if( elapsed > updateInterval ) {
+              lastUpdateMillis = now;
+              float[] coordinates = inputCoordinates();
+              if( coordinates != null ){
+                applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
+                forceCoordinates.add(coordinates);
               }
-        }
+         }
+         while( forceCoordinates.size() > 5 ) {
+             forceCoordinates.remove(0);
+         }
 
-	// draw video frame, leaves, and mask
+	// draw video frame
+        
+	// draw leaves
 	for (int i = leaves.size()-1; i >= 0; i--) {
 		((Leaf)leaves.get(i)).update();
 		((Leaf)leaves.get(i)).display();
 	}
       
 	// draw mask
-        textureMode(NORMALIZED);
-        pushMatrix();
+	textureMode(NORMALIZED);
+	pushMatrix();
 	translate(width/2,height/2,backgroundZ);
 	beginShape(PConstants.QUADS);
 	texture(overlayImage);
@@ -159,24 +116,79 @@ void draw() {
 	vertex(ww/2,hh/2,100,ww,hh);
 	vertex(-ww/2,hh/2,100,0,hh);
 	endShape();
-        popMatrix();        
+	popMatrix();        
         
 	// drawing debug stuff, depth sort not needed
 	if( debug ) {
-    	stroke(0,0,255);
-    	strokeWeight(5.0);
-        text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
-    	fill(255,0,0);
-    	line(lastMouseX,lastMouseY,0,mouseX,mouseY,0);
-    	text("mouse Y:"+mouseY,50+mouseX,-40+mouseY);
-    	text("movement angle:"+nf(degrees(movementAngle),1,2),50+mouseX,mouseY);
-    	text("force angle:"+nf(degrees(forceAngle),1,2),50+mouseX,40+mouseY);
-    	text("normalized force angle:"+nf(degrees(normalizedForceAngle),1,2),50+mouseX,80+mouseY);
-    	strokeWeight(2.0);
-    	fill(255,0,0);
-    	ellipse(mouseX,mouseY,20,20);
-        }
+		stroke(0,0,255);
+		strokeWeight(2.0);
+		text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
+		fill(255,0,0);
+                for(int i =0; i < forceCoordinates.size(); i++ ) {
+                    float[] a = (float[])forceCoordinates.get(i);
+		    line(a[0],a[1],0,a[2],a[3],0);
+                    ellipse(a[2],a[3],20,20);
+                }
+		//text("movement angle:"+nf(degrees(movementAngle),1,2),50+mouseX,mouseY);
+		//text("force angle:"+nf(degrees(forceAngle),1,2),50+mouseX,40+mouseY);
+		//text("normalized force angle:"+nf(degrees(normalizedForceAngle),1,2),50+mouseX,80+mouseY);
+		//strokeWeight(2.0);
+		//fill(255,0,0);
+		
+	}
   //popMatrix();
+}
+
+float[] inputCoordinates() {
+	PVector movementVector;
+	if( client != null ){
+		return receiveCoordinates();
+	} else {
+		float[] arr = new float[] { lastMouseX, lastMouseY, mouseX, mouseY };
+		lastMouseX = mouseX;
+		lastMouseY = mouseY;
+		return arr;
+	}
+}
+
+void applyForce(float x1, float y1, float x2, float y2) {
+	PVector movementVector = new PVector(x2-x1,y2-y1,0);
+	float headX = x2;
+	float headY = y2;
+	movementAngle = atan2(movementVector.x,movementVector.y);
+	for (int i = leaves.size()-1; i >= 0; i--) { 
+		Leaf leaf = (Leaf) leaves.get(i);
+		PVector vect = new PVector(leaf.location.x-headX,leaf.location.y-headY);
+		float distance = dist(leaf.location.x,leaf.location.y, headX, headY),
+			dx = (leaf.location.x-headX),
+			dy = (leaf.location.y-headY);
+		normalizedForceAngle = forceAngle = PVector.angleBetween(movementVector,vect);
+		if( forceAngle > (PI/2) )
+			normalizedForceAngle = (PI/2)-(forceAngle%(PI/2));
+		
+		// determine the rotation direction
+		float rotationDirection = 1;
+		if( leaf.location.x < headX && leaf.location.y < headY && movementAngle < 0 && movementAngle > -90 )
+			rotationDirection = -1;
+		else if( leaf.location.x < headX && leaf.location.y > headY && movementAngle > 0 && movementAngle < 90 )
+			rotationDirection = -1;
+		else if( leaf.location.x > headX && leaf.location.y > headY && movementAngle > 90 && movementAngle < 180 )
+			rotationDirection = -1;
+		else if( leaf.location.x > headX && leaf.location.y < headY && movementAngle > -180 && movementAngle < -90 )
+			rotationDirection = -1;
+			
+		// apply more rotation when closer to 90degree angle
+		float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
+		float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,25);
+		if( distance < distanceThreshold ) {
+				float distanceFactor = map(distance,0,distanceThreshold,1,2);
+				leaf.velocity.x += (dx/30.0)*distanceFactor;
+				leaf.velocity.y += (dy/30.0)*distanceFactor;
+				leaf.spinSpeed += (rotationFactor/6)*rotationDirection;
+				leaf.location.z += zFactor*distanceFactor;
+				leaf.increaseFluctuation(distanceFactor*5);
+		}
+	}
 }
 
 void keyPressed() {
@@ -194,9 +206,6 @@ void keyPressed() {
 		controlP5.loadProperties();
 	}
 }
-void mouseMoved(){}
-
-void mousePressed() {}
 
 void distanceThreshold(float v){
 	distanceThreshold = v;
@@ -275,7 +284,19 @@ synchronized void setLeaves(int count){
     }
 }
 
-void clientEvent(Client c) {
-  int data = client.read();
-  println("Server Says:  "+data);
+float[] receiveCoordinates() {
+  if( client.available() >= 16 ) {
+    byte[] data = new byte[16];
+    int read = client.readBytes(data);
+    //println("Read "+ read+ " bytes:"+Arrays.toString(data));
+    ByteBuffer buffer = ByteBuffer.allocate(16);
+    buffer.put(data);
+    float x1 = buffer.getFloat(0);
+    float y1 = buffer.getFloat(4);
+    float x2 = buffer.getFloat(8);
+    float y2 = buffer.getFloat(12);
+    //println("Received vector:  "+v.toString());
+    return new float[]{x1,y1,x2,y2};
+  }
+  return null;
 }
