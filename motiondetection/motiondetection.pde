@@ -119,10 +119,32 @@ void draw() {
     }
     
     image(cam,80,10,320,240);
-     text("use 'S' to save and 'L' load settings",20,20);
+    stroke(255,0,0);
+    
+    float mappedLeft = map(leftTop.getArrayValue()[0],0,width,0,320);
+    line(80+mappedLeft,10,80+mappedLeft,240);
+
+    float mappedRight = map(bottomRight.getArrayValue()[0],0,width,0,320);
+    line(80+mappedRight,10,80+mappedRight,240);
+    
+    float mappedTop = map(leftTop.getArrayValue()[1],0,width,0,240);
+    line(80,10+mappedTop,400,10+mappedTop);
+    
+    float mappedBottom = map(bottomRight.getArrayValue()[0],0,width,0,240);
+    line(80,10+mappedBottom,400,10+mappedBottom);
+    text("use 'S' to save and 'L' load settings",20,20);
  }
 
 }
+
+void keyPressed() {
+       if( key == 's' || key == 'S' ) {
+		controlP5.saveProperties();
+	} else if( key == 'l' || key == 'L' ) {
+		controlP5.loadProperties();
+	}
+}
+
 void updateIntervalMillis(float v){
 	updateIntervalMillis = v;
 	println("updateIntervalMillis set to: "+v);
@@ -143,13 +165,6 @@ void fade(int v){
 	fade = v;
 	println("fade set to: "+v);
         flob.setFade(fade);
-}
-void keyPressed() {
-       if( key == 's' || key == 'S' ) {
-		controlP5.saveProperties();
-	} else if( key == 'l' || key == 'L' ) {
-		controlP5.loadProperties();
-	}
 }
 
 /*
