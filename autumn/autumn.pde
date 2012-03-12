@@ -31,8 +31,8 @@ void setup() {
 	size(1024, 768,OPENGL);
 	frameRate(30);
 	hint(DISABLE_DEPTH_TEST);
-        backgroundImage = loadImage("/../../resources/background.jpg");
-        overlayImage = loadImage("/../../resources/overlay.png");
+        backgroundImage = loadImage("resources/background.jpg");
+        overlayImage = loadImage("resources/overlay.png");
 	// call this before setLeaves
 	loadImages(10);
 
@@ -255,7 +255,7 @@ void loadImages(int maxImages) {
 		images.clear();
 	// read up to maxImages
 	for(int c=1;c <maxImages;c++) {
-		PImage img = loadImage("/../../resources/leaves/highres/leaves_"+nf(c,2)+".png");
+		PImage img = loadImage("resources/leaves/highres/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
 		images.add(img);
