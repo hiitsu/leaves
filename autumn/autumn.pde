@@ -3,7 +3,7 @@ import processing.net.*;
 import controlP5.*;
 import processing.opengl.*;
 
-int leafCount = 100,leafSize = 5;
+int leafCount = 500,leafSize = 5;
 float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
       updateInterval = 25,         // how often leaves should be update
@@ -45,7 +45,7 @@ void setup() {
 
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
-	controlP5.addSlider("leafCount",1,500,leafCount,width-50,110,30,80);
+	controlP5.addSlider("leafCount",1,1000,leafCount,width-50,110,30,80);
 	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
 
 	setLeaves(leafCount);
@@ -272,7 +272,7 @@ synchronized void setLeaves(int count){
 synchronized void addLeaf() {
   float x = random(0,width);
   float y = random(0,height);
-  float z = random(10,1000);
+  float z = random(10,50);
   leaves.add(new Leaf(x,y,z,random(5,20),(PImage)images.get(int(random(0,images.size())))));
 }
 

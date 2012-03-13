@@ -39,7 +39,7 @@ class Leaf {
         void reduceFluctuation(){
            for(int i=0; i <4; i++) {
               float v = fluctuations[i][2];
-              if( v > 0 ) v -= 0.1;
+              if( v > 0 ) v -= 0.4;
               fluctuations[i][2] = v;
            }
         }        
