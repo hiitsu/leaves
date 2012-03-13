@@ -8,7 +8,6 @@ float distanceThreshold = 100,     // maximum distance when movement vector is a
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
       updateInterval = 25,         // how often leaves should be update
       lastUpdateMillis = millis(), // timing helper variable
-      windWaitMillis = 2000,        // waiting period before wind kicks in
       topVelocity = 10,            // leaf max XY speed
       topSpinSpeed = 0.2,           // leaf max rotation speed
       backgroundZ = -50;           // background image place in z-axis
@@ -23,11 +22,7 @@ ControlP5 controlP5;
 PImage backgroundImage,overlayImage;
 Client client;
 
-boolean debug = true, wind = true;
-float windGenerator = 0.0;
-float movementAngle,
-      forceAngle,
-      normalizedForceAngle;
+boolean debug = true;
 
 void setup() {
 	size(1024, 768,OPENGL);
@@ -50,7 +45,6 @@ void setup() {
 
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
-	controlP5.addToggle("wind",wind,width-50,60,30,30);
 	controlP5.addSlider("leafCount",1,500,leafCount,width-50,110,30,80);
 	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
 
@@ -58,32 +52,11 @@ void setup() {
 }
 
 void draw() {
-	//pushMatrix();
-	//camera(width/2,height/2,1000.0,width/2,height/2,0.0,0,1,0);
-	
-	background(0);
-	textureMode(NORMALIZED);
-	pushMatrix();
-	translate(width/2,height/2,backgroundZ);
-	beginShape(PConstants.QUADS);
-	texture(backgroundImage);
-	int w = backgroundImage.width,
-		h = backgroundImage.height;
-	vertex(-w/2,-h/2,0,0,0);
-	vertex(w/2,-h/2,0,w,0);
-	vertex(w/2,h/2,0,w,h);
-	vertex(-w/2,h/2,0,0,h);
-	endShape();
-	popMatrix();
+	drawBackground();
         
 	float now = millis();
-
-	// receive movemetn vector
-	//PVector movementVector = new PVector(lastMouseX-mouseX,lastMouseY-mouseY,0);
-
-	// enough time elapsed from last update and big enough movement happening?
         float elapsed = now - lastUpdateMillis;
-	if( elapsed > updateInterval ) {
+	if( elapsed > updateInterval ) { // enough time elapsed from last update ?
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
@@ -91,6 +64,7 @@ void draw() {
                 forceCoordinates.add(coordinates);
               }
          }
+         // keep force history short
          while( forceCoordinates.size() > 5 ) {
              forceCoordinates.remove(0);
          }
@@ -138,7 +112,21 @@ void draw() {
 	}
   //popMatrix();
 }
-
+void drawBackground() {
+	textureMode(NORMALIZED);
+	pushMatrix();
+	translate(width/2,height/2,backgroundZ);
+	beginShape(PConstants.QUADS);
+	texture(backgroundImage);
+	int w = backgroundImage.width,
+		h = backgroundImage.height;
+	vertex(-w/2,-h/2,0,0,0);
+	vertex(w/2,-h/2,0,w,0);
+	vertex(w/2,h/2,0,w,h);
+	vertex(-w/2,h/2,0,0,h);
+	endShape();
+	popMatrix();
+}
 float[] inputCoordinates() {
 	PVector movementVector;
 	if( client != null ){
@@ -155,14 +143,15 @@ void applyForce(float x1, float y1, float x2, float y2) {
 	PVector movementVector = new PVector(x2-x1,y2-y1,0);
 	float headX = x2;
 	float headY = y2;
-	movementAngle = atan2(movementVector.x,movementVector.y);
+	float movementAngle = atan2(movementVector.x,movementVector.y);
 	for (int i = leaves.size()-1; i >= 0; i--) { 
 		Leaf leaf = (Leaf) leaves.get(i);
 		PVector vect = new PVector(leaf.location.x-headX,leaf.location.y-headY);
 		float distance = dist(leaf.location.x,leaf.location.y, headX, headY),
 			dx = (leaf.location.x-headX),
 			dy = (leaf.location.y-headY);
-		normalizedForceAngle = forceAngle = PVector.angleBetween(movementVector,vect);
+		float normalizedForceAngle;
+                float forceAngle = normalizedForceAngle = PVector.angleBetween(movementVector,vect);
 		if( forceAngle > (PI/2) )
 			normalizedForceAngle = (PI/2)-(forceAngle%(PI/2));
 		
@@ -238,10 +227,7 @@ void leafSize(int v){
 	setLeaves(leafCount);
 	println("leafSize set to: "+v);
 }
-void wind(boolean flag){
-	println("wind set to: "+flag);
-        wind = flag;
-}
+
 void network(boolean flag){
 	println("network set to: "+flag);
 	if( flag ) {
