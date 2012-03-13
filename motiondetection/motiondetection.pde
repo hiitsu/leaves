@@ -13,7 +13,7 @@ int videotex = 2; //case 0: videotex = videoimg;//case 1: videotex = videotexbin
 //case 2: videotex = videotexmotion//case 3: videotex = videoteximgmotion; 
 int fade = 25;
 int edgeThreshold = 55;
-int minimumArea = 16*16,
+int minimumArea = 4,
     maximumArea = 320*240; // quarter screen blob is still valid
 Slider2D leftTop,bottomRight;
 float updateIntervalMillis = 100;
@@ -25,13 +25,13 @@ int MAX_TRACKED = 5;
 
 void setup() {
   println(Capture.list());
-  size(800,600);
+  size(500,600);
   int FPS = 20;
   server = new Server(this, 12345);
-  cam = new Capture(this,160,120,"IIDC FireWire Video",FPS);
+  cam = new Capture(this,160,120,"USB Video Class Video",FPS);
 
   // setup the detection parameters
-  flob = new Flob(160,120, width, height);
+  flob = new Flob(cam, 320, 240);
   flob.setSrcImage(videotex);
   flob.setBackground(cam);
   flob.setBlur(0);
@@ -44,14 +44,14 @@ void setup() {
 
 	// controls on the left side
 	controlP5.addSlider("updateIntervalMillis",20,300,updateIntervalMillis,20,60,30,80);
-	controlP5.addSlider("minimumArea",10,300,minimumArea,20,160,30,80);
-	controlP5.addSlider("maximumArea",20,1000,maximumArea,20,260,30,80);
+	controlP5.addSlider("minimumArea",4,300,minimumArea,20,160,30,80);
+	controlP5.addSlider("maximumArea",10,19200,maximumArea,20,260,30,80);
 	controlP5.addSlider("edgeThreshold",1,200,edgeThreshold,20,360,30,80);
 	controlP5.addSlider("fade",5,200,fade,20,460,30,80);
 
 	// controls on the right side
-	leftTop = controlP5.addSlider2D("leftTop",0,width/2,0,height/2,10,10,width-90,110,80,80);
-	bottomRight = controlP5.addSlider2D("bottomRight",width/2,width,height/2,height,width-10,height-10,width-90,210,80,80);
+	leftTop = controlP5.addSlider2D("leftTop",0,160,0,120,10,10,width-90,110,80,80);
+	bottomRight = controlP5.addSlider2D("bottomRight",160,320,120,240,width-10,height-10,width-90,210,80,80);
 
         previousPositions = new ArrayList();
 
@@ -68,6 +68,8 @@ void draw() {
     image(flob.getSrcImage(),80,320-30,320,240); // absolute difference image
     
     // go through blobs to validate them that they are proper size and on correct area
+    pushMatrix();
+    translate(80,290);
     ArrayList validIndices = new ArrayList();
     for( int i=0; i<blobs.size(); i++ ) {
         ABlob blob = (ABlob)blobs.get(i);
@@ -75,6 +77,7 @@ void draw() {
         // area validations
         float area = blob.dimx * blob.dimy;
         if( area < minimumArea || area > maximumArea ) {
+           //println("area too big or small");
            continue;
         }
 
@@ -87,17 +90,22 @@ void draw() {
         float topLimit        = leftTop.getArrayValue()[1];
         float rightLimit      = bottomRight.getArrayValue()[0];
         float bottomLimit     = bottomRight.getArrayValue()[1];
-        if( leftPosition >= leftLimit && rightLimit <= rightLimit &&
+        if( leftPosition >= leftLimit && rightPosition <= rightLimit &&
             topPosition >= topLimit && bottomPosition <= bottomLimit ) {
+            
             validIndices.add(i);
             // ok we are tracking this blob, so draw a box around it
-            fill(0,255,255,100);
+            fill(0,255,255,64);
             stroke(0,255,0,64);
             rectMode(CENTER);
+            //float mappedX = map(blob.cx,0,
+            
             rect(blob.cx,blob.cy,blob.dimx,blob.dimy);
+            
             rectMode(CORNER);
          }
     } // end validations
+    popMatrix();
     
     float elapsed = currentMillis - lastUpdateMillis;
     if( validIndices.size()> 0 ) { // some blobs passed validations?
@@ -121,17 +129,24 @@ void draw() {
     image(cam,80,10,320,240);
     stroke(255,0,0);
     
+    /* mapping limiter coordinates from window space to the 320x240 tile
     float mappedLeft = map(leftTop.getArrayValue()[0],0,width,0,320);
-    line(80+mappedLeft,10,80+mappedLeft,240);
-
     float mappedRight = map(bottomRight.getArrayValue()[0],0,width,0,320);
-    line(80+mappedRight,10,80+mappedRight,240);
-    
     float mappedTop = map(leftTop.getArrayValue()[1],0,width,0,240);
-    line(80,10+mappedTop,400,10+mappedTop);
-    
     float mappedBottom = map(bottomRight.getArrayValue()[0],0,width,0,240);
+    */
+    float mappedLeft = leftTop.getArrayValue()[0];
+    float mappedRight = bottomRight.getArrayValue()[0];
+    float mappedTop = leftTop.getArrayValue()[1];
+    float mappedBottom = bottomRight.getArrayValue()[1];
+    line(80+mappedLeft,10,80+mappedLeft,240);
+    line(80+mappedRight,10,80+mappedRight,240);
+    line(80,10+mappedTop,400,10+mappedTop);
     line(80,10+mappedBottom,400,10+mappedBottom);
+    
+    // draw the frame for edged image
+    noFill();
+    rect(80,320-30,320,240);
     text("use 'S' to save and 'L' load settings",20,20);
  }
 
@@ -173,3 +188,4 @@ void leftTop(){
 	println("leftTop set to: "+Arrays.toString(leftTop.getArrayValue()));
 }
 */
+
