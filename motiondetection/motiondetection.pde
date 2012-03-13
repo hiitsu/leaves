@@ -28,7 +28,7 @@ void setup() {
   size(800,600);
   int FPS = 20;
   server = new Server(this, 12345);
-  cam = new Capture(this,160,120, FPS);
+  cam = new Capture(this,160,120,"IIDC FireWire Video",FPS);
 
   // setup the detection parameters
   flob = new Flob(160,120, width, height);

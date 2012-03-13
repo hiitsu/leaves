@@ -53,22 +53,6 @@ void setup() {
 
 void draw() {
 	drawBackground();
-
-         // remove leaves outside the area and add new ones
-         int removedCount = 0;
-         for(Iterator it = leaves.iterator(); it.hasNext(); ) {
-               Leaf leaf = (Leaf)it.next();
-               if( (leaf.location.x <= 0 || leaf.location.x >= width) || 
-                   (leaf.location.y <= 0 || leaf.location.y >= height) ) {
-                 println("Leaf went out");
-                 it.remove();
-                 removedCount++;
-               }
-         }
-        while( removedCount > 0 ) {
-            addLeaf();
-            removedCount--;
-        }
         
 	float now = millis();
         float elapsed = now - lastUpdateMillis;
