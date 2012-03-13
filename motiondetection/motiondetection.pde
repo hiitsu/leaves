@@ -107,6 +107,7 @@ void draw() {
     } // end validations
     popMatrix();
     
+    ArrayList currentPositions = new ArrayList();
     float elapsed = currentMillis - lastUpdateMillis;
     if( validIndices.size()> 0 ) { // some blobs passed validations?
        if( elapsed > updateIntervalMillis ) { // and enough time between the updates
@@ -116,12 +117,20 @@ void draw() {
              float cx = b.cx;
              float cy = b.cy;
               // match to previous positions
+             currentPositions.add(new float[] { cx,cy});
              for(int j = previousPositions.size()-1; j >= 0; j--) {
                   float[] coordinates = (float[])previousPositions.get(j);
                   // distance with pythagoras
-                  float d = sqrt( pow(coordinates[0]-cx,2) + pow(coordinates[1]-cy,2));
+                  float ox = coordinates[0];
+                  float oy = coordinates[1];
+                  float d = sqrt( pow(ox-cx,2) + pow(oy-cy,2) );
+                  if( d < 200 ) {
+                      //println("sending coords");
+                      sendVector(ox,oy,cx,cy);
+                  }
              }
          }
+         previousPositions = currentPositions;
          lastUpdateMillis = millis();
       }
     }
@@ -181,11 +190,27 @@ void fade(int v){
 	println("fade set to: "+v);
         flob.setFade(fade);
 }
+void sendVector(float x1,float y1, float x2, float y2) {
+   server.write(byta(map(x1,0,320,0,1024)));
+   server.write(byta(map(y1,0,240,0,768)));
+   server.write(byta(map(x2,0,320,0,1024)));
+   server.write(byta(map(y2,0,240,0,768)));
+}
 
+byte[] byta(float v){
+  int i = Float.floatToRawIntBits(v);
+    return new byte[] {
+        (byte)((i >> 24) & 0xff),
+        (byte)((i >> 16) & 0xff),
+        (byte)((i >> 8) & 0xff),
+        (byte)((i >> 0) & 0xff),
+    };
+}
 /*
 void leftTop(){
     if( leftTop != null )
 	println("leftTop set to: "+Arrays.toString(leftTop.getArrayValue()));
 }
 */
+
 

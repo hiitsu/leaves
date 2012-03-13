@@ -60,6 +60,7 @@ void draw() {
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
+                //println("force coords:"+Arrays.toString(coordinates));
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
                 forceCoordinates.add(coordinates);
               }
