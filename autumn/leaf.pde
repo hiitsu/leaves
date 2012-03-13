@@ -91,6 +91,7 @@ class Leaf {
                 textureMode(NORMALIZED);
 		pushMatrix();
 		translate(location.x,location.y,location.z);
+                //text("location:"+location.toString(),20,0,10);
 		rotate(angle);
 		noStroke();
 		beginShape(PConstants.QUADS);
@@ -102,6 +103,7 @@ class Leaf {
 		vertex(w/2,h/2,map(sin(fluctuations[2][0]),-1,1,-fluctuations[2][2],fluctuations[2][2]),w,h);
 		vertex(-w/2,h/2,map(sin(fluctuations[3][0]),-1,1,-fluctuations[3][2],fluctuations[3][2]),0,h);
 		endShape();
+                
 /*
                 if( debug ) {
   		  fill(255,0,0);

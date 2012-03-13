@@ -53,6 +53,22 @@ void setup() {
 
 void draw() {
 	drawBackground();
+
+         // remove leaves outside the area and add new ones
+         int removedCount = 0;
+         for(Iterator it = leaves.iterator(); it.hasNext(); ) {
+               Leaf leaf = (Leaf)it.next();
+               if( (leaf.location.x <= 0 || leaf.location.x >= width) || 
+                   (leaf.location.y <= 0 || leaf.location.y >= height) ) {
+                 println("Leaf went out");
+                 it.remove();
+                 removedCount++;
+               }
+         }
+        while( removedCount > 0 ) {
+            addLeaf();
+            removedCount--;
+        }
         
 	float now = millis();
         float elapsed = now - lastUpdateMillis;
@@ -97,6 +113,7 @@ void draw() {
 		stroke(0,0,255);
 		strokeWeight(2.0);
 		text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
+                text("leafCount: "+leaves.size(),20,40);
 		fill(255,0,0);
                 for(int i =0; i < forceCoordinates.size(); i++ ) {
                     float[] a = (float[])forceCoordinates.get(i);
@@ -264,10 +281,15 @@ synchronized void setLeaves(int count){
         }
 	leaves.clear();
 	while( leaves.size() < count ) {
-                float x = random(0,width);
-                float y = random(0,height);
-		leaves.add(new Leaf(x,y,random(10,1000),random(5,20),(PImage)images.get(int(random(0,images.size())))));
+          addLeaf();
     }
+}
+
+synchronized void addLeaf() {
+  float x = random(0,width);
+  float y = random(0,height);
+  float z = random(10,1000);
+  leaves.add(new Leaf(x,y,z,random(5,20),(PImage)images.get(int(random(0,images.size())))));
 }
 
 float[] receiveCoordinates() {
