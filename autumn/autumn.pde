@@ -40,7 +40,7 @@ void setup() {
 	hint(DISABLE_DEPTH_TEST);
 	overlayImage = loadImage("overlay.png");
 	// call this before setLeaves
-	loadImages(10);
+	loadImages(2);
 
 	controlP5 = new ControlP5(this);
 	controlP5.setAutoInitialization(true);
@@ -77,6 +77,7 @@ void draw() {
            background(0);
            
 	// draw leaves
+        float leafUpdate = -1, leafDraw = -1;
         if( drawLeaves ) {
           float elapsed = now - lastUpdateMillis;
 	  if( elapsed > updateInterval ) { // enough time elapsed from last update ?
@@ -92,14 +93,14 @@ void draw() {
           for (int i = leaves.size()-1; i >= 0; i--) {
 		((Leaf)leaves.get(i)).update();
 	  }
-          float after = millis();
-          text("Milliseconds to update leaves:"+(int)(after-before),300,300);
+          leafUpdate = millis() -before;
+          
           before = millis();
           for (int i = leaves.size()-1; i >= 0; i--) {
 		((Leaf)leaves.get(i)).display();
 	  }
-          after = millis();
-          text("Milliseconds to draw leaves:"+(int)(after-before),300,350);
+          leafDraw = millis()-before;
+
         }
        
 	// draw mask
@@ -108,9 +109,9 @@ void draw() {
         
 	// drawing debug stuff, depth sort not needed
 	if( debug ) {
-		stroke(255,255,255,0);
-		
-  		text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
+		stroke(255,0);
+		noTint();
+  		text("use 'S' to save, and 'L' load settings, 'H' to show/hide controls, 'D' to show/hide FPS",20,20);
                 averageCounter++;
                 if( averageCounter == averageResetInterval ) {
                   averageCounter = 0;
@@ -118,8 +119,12 @@ void draw() {
                 }
                 float generationTime = (millis()-now);
                 averageTime += generationTime;
+                
                 text("Average frame generation time in milliseconds:"+(int)(averageTime/averageCounter),100,100);
                 text("Current frame generation time in milliseconds:"+(int)(generationTime),100,140);
+                text("FPS: " + Math.floor(frameRate),100,180);
+                text("Milliseconds to draw leaves:"+(int)(leafDraw),100,220);
+                text("Milliseconds to update leaves:"+(int)(leafUpdate),100,240);
 	}
 }
 
@@ -264,7 +269,7 @@ void loadImages(int maxImages) {
 		PImage img = loadImage("leaves/highres/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
-                img.resize(128,128);
+                img.resize(256,256);
 		images.add(img);
 	}
 }
