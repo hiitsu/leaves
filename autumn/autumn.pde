@@ -4,8 +4,8 @@ import processing.net.*;    // getting vectors over the network
 import controlP5.*;         // GUI control library
 import processing.opengl.*; // draw utilizing opengl rendering engine
 
-int leafCount = 500,
-    leafSize = 5,
+int leafCount = 1000,
+    leafSize = 6,
     fps = 50;
 float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
@@ -23,17 +23,20 @@ ArrayList forceCoordinates = new ArrayList(); // of float[]
 ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
 ControlP5 controlP5;
-PImage backgroundImage,overlayImage;
+PImage overlayImage;
 Movie backgroundMovie;
 Client client;
-
 boolean debug = true;
+
+// profiling variables
+float averageTime = 0;
+int averageCounter = 0;
+int averageResetInterval = 5000;
 
 void setup() {
 	size(1024, 768,OPENGL);
 	frameRate(fps);
 	hint(DISABLE_DEPTH_TEST);
-	backgroundImage = loadImage("background.jpg");
 	overlayImage = loadImage("overlay.png");
 	// call this before setLeaves
 	loadImages(10);
@@ -50,7 +53,7 @@ void setup() {
 
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
-	controlP5.addSlider("leafCount",1,1000,leafCount,width-50,110,30,80);
+	controlP5.addSlider("leafCount",1,1500,leafCount,width-50,110,30,80);
 	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
 
 	setLeaves(leafCount);
@@ -60,9 +63,8 @@ void setup() {
 }
 
 void draw() {
-	drawBackground();
-        
-	float now = millis();
+        float now = millis();
+
         float elapsed = now - lastUpdateMillis;
 	if( elapsed > updateInterval ) { // enough time elapsed from last update ?
               lastUpdateMillis = now;
@@ -79,27 +81,16 @@ void draw() {
          }
 
 	// draw video frame
+        drawBackground();
         
 	// draw leaves
 	for (int i = leaves.size()-1; i >= 0; i--) {
 		((Leaf)leaves.get(i)).update();
 		((Leaf)leaves.get(i)).display();
 	}
-      
+       
 	// draw mask
-	textureMode(NORMALIZED);
-	pushMatrix();
-	translate(width/2,height/2,backgroundZ);
-	beginShape(PConstants.QUADS);
-	texture(overlayImage);
-	int ww = overlayImage.width,
-		hh = overlayImage.height;
-	vertex(-ww/2,-hh/2,100,0,0);
-	vertex(ww/2,-hh/2,100,ww,0);
-	vertex(ww/2,hh/2,100,ww,hh);
-	vertex(-ww/2,hh/2,100,0,hh);
-	endShape();
-	popMatrix();        
+        image(overlayImage,0,0,width,height);        
         
 	// drawing debug stuff, depth sort not needed
 	if( debug ) {
@@ -120,7 +111,14 @@ void draw() {
 		//fill(255,0,0);
 		
 	}
-  //popMatrix();
+        averageCounter++;
+        if( averageCounter == averageResetInterval ) {
+          averageCounter = 0;
+          averageTime = 0;
+        }
+        averageTime += (millis()-now);
+        text("Average draw() duration milliseconds:"+(int)(averageTime/averageCounter),50,50);
+ //popMatrix();
 }
 void drawBackground() {
 	/*textureMode(NORMALIZED);
@@ -136,7 +134,7 @@ void drawBackground() {
 	vertex(-w/2,h/2,0,0,h);
 	endShape();
 	popMatrix();*/
-        image((PImage)backgroundMovie,0,0,width,height);
+        image(backgroundMovie,0,0,width,height);
 }
 float[] inputCoordinates() {
 	PVector movementVector;
@@ -310,6 +308,7 @@ void movieEvent(Movie m) {
   //m.loadPixels();
   //m.updatePixels();
 }
+
 
 
 
