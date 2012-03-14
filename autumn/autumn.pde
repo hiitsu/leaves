@@ -262,6 +262,7 @@ void loadImages(int maxImages) {
 		PImage img = loadImage("leaves/highres/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
+                img.resize(128,128);
 		images.add(img);
 	}
 }

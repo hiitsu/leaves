@@ -11,7 +11,7 @@ class Leaf {
 		this.location = new PVector(x,y,z);
 		this.velocity  = new PVector(0,0,0);
 		this.acceleration  = new PVector(0.5,0.5,0.0);
-                this.sizeFactor = (int)random(1+(int)leafSize/2,leafSize*2);
+                this.sizeFactor = 1+(int)random((int)leafSize/4,leafSize);
 		this.angle = 0;
 		this.spinSpeed = 0.01;
 		this.img = img;
