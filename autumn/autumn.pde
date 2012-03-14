@@ -5,7 +5,7 @@ import controlP5.*;         // GUI control library
 import processing.opengl.*; // draw utilizing opengl rendering engine
 
 int leafCount = 1000,
-    leafSize = 6,
+    leafSize = 3,
     fps = 50;
 float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
@@ -31,7 +31,8 @@ boolean debug = true;
 // profiling variables
 float averageTime = 0;
 int averageCounter = 0;
-int averageResetInterval = 5000;
+int averageResetInterval = 100;
+boolean drawMovie = true, drawLeaves = true, drawOverlay = true;
 
 void setup() {
 	size(1024, 768,OPENGL);
@@ -55,6 +56,9 @@ void setup() {
 	controlP5.addToggle("network",false,width-50,10,30,30);
 	controlP5.addSlider("leafCount",1,1500,leafCount,width-50,110,30,80);
 	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
+        controlP5.addToggle("drawMovie",drawMovie,width-50,310,30,30);
+        controlP5.addToggle("drawLeaves",drawLeaves,width-50,360,30,30);
+        controlP5.addToggle("drawOverlay",drawOverlay,width-50,410,30,30);
 
 	setLeaves(leafCount);
         backgroundMovie = new Movie(this,"background.mov");
@@ -64,9 +68,16 @@ void setup() {
 
 void draw() {
         float now = millis();
-
+        
+	// draw video frame
+        if( drawMovie ) 
+              image(backgroundMovie,0,0,width,height);
+        else 
+           background(0); 
+	// draw leaves
+        if( drawLeaves ) {
         float elapsed = now - lastUpdateMillis;
-	if( elapsed > updateInterval ) { // enough time elapsed from last update ?
+	  if( elapsed > updateInterval ) { // enough time elapsed from last update ?
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
@@ -74,23 +85,20 @@ void draw() {
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
                 forceCoordinates.add(coordinates);
               }
-         }
+           }
          // keep force history short
-         while( forceCoordinates.size() > 5 ) {
+           while( forceCoordinates.size() > 5 ) {
              forceCoordinates.remove(0);
-         }
-
-	// draw video frame
-        drawBackground();
-        
-	// draw leaves
-	for (int i = leaves.size()-1; i >= 0; i--) {
+           }	
+          for (int i = leaves.size()-1; i >= 0; i--) {
 		((Leaf)leaves.get(i)).update();
 		((Leaf)leaves.get(i)).display();
-	}
+	  }
+        }
        
 	// draw mask
-        image(overlayImage,0,0,width,height);        
+        if( drawOverlay )
+            image(overlayImage,0,0,width,height);        
         
 	// drawing debug stuff, depth sort not needed
 	if( debug ) {
@@ -117,7 +125,7 @@ void draw() {
           averageTime = 0;
         }
         averageTime += (millis()-now);
-        text("Average draw() duration milliseconds:"+(int)(averageTime/averageCounter),50,50);
+        text("Average frame generation time in milliseconds:"+(int)(averageTime/averageCounter),50,50);
  //popMatrix();
 }
 void drawBackground() {
@@ -134,7 +142,7 @@ void drawBackground() {
 	vertex(-w/2,h/2,0,0,h);
 	endShape();
 	popMatrix();*/
-        image(backgroundMovie,0,0,width,height);
+        
 }
 float[] inputCoordinates() {
 	PVector movementVector;
@@ -236,7 +244,18 @@ void leafSize(int v){
 	setLeaves(leafCount);
 	println("leafSize set to: "+v);
 }
-
+void drawMovie(boolean v){
+	drawMovie = v;
+	println("drawMovie set to: "+v);
+}
+void drawOverlay(boolean v){
+	drawOverlay = v;
+	println("drawOverlay set to: "+v);
+}
+void drawLeaves(boolean v){
+	drawLeaves = v;
+	println("drawLeaves set to: "+v);
+}
 void network(boolean flag){
 	println("network set to: "+flag);
 	if( flag ) {
