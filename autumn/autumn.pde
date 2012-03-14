@@ -1,9 +1,12 @@
-import java.nio.*;
-import processing.net.*;
-import controlP5.*;
-import processing.opengl.*;
+import processing.video.*;  // playing background
+import java.nio.*;          // for the bytebuffer
+import processing.net.*;    // getting vectors over the network
+import controlP5.*;         // GUI control library
+import processing.opengl.*; // draw utilizing opengl rendering engine
 
-int leafCount = 500,leafSize = 5;
+int leafCount = 500,
+    leafSize = 5,
+    fps = 50;
 float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
       updateInterval = 25,         // how often leaves should be update
@@ -11,6 +14,7 @@ float distanceThreshold = 100,     // maximum distance when movement vector is a
       topVelocity = 10,            // leaf max XY speed
       topSpinSpeed = 0.2,           // leaf max rotation speed
       backgroundZ = -50;           // background image place in z-axis
+      
 PVector gravity = new PVector(0,0,4);                // how fast the leaves come down
      
 float lastMouseX = -1,
@@ -20,16 +24,17 @@ ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
 ControlP5 controlP5;
 PImage backgroundImage,overlayImage;
+Movie backgroundMovie;
 Client client;
 
 boolean debug = true;
 
 void setup() {
 	size(1024, 768,OPENGL);
-	frameRate(50);
+	frameRate(fps);
 	hint(DISABLE_DEPTH_TEST);
-	backgroundImage = loadImage("resources/background.jpg");
-	overlayImage = loadImage("resources/overlay.png");
+	backgroundImage = loadImage("background.jpg");
+	overlayImage = loadImage("overlay.png");
 	// call this before setLeaves
 	loadImages(10);
 
@@ -49,6 +54,9 @@ void setup() {
 	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
 
 	setLeaves(leafCount);
+        backgroundMovie = new Movie(this,"background.mov");
+        backgroundMovie.frameRate(fps);
+        backgroundMovie.loop();
 }
 
 void draw() {
@@ -115,19 +123,20 @@ void draw() {
   //popMatrix();
 }
 void drawBackground() {
-	textureMode(NORMALIZED);
+	/*textureMode(NORMALIZED);
 	pushMatrix();
 	translate(width/2,height/2,backgroundZ);
 	beginShape(PConstants.QUADS);
-	texture(backgroundImage);
-	int w = backgroundImage.width,
-		h = backgroundImage.height;
+	texture(backgroundMovie);
+	int w = backgroundMovie.width,
+		h = backgroundMovie.height;
 	vertex(-w/2,-h/2,0,0,0);
 	vertex(w/2,-h/2,0,w,0);
 	vertex(w/2,h/2,0,w,h);
 	vertex(-w/2,h/2,0,0,h);
 	endShape();
-	popMatrix();
+	popMatrix();*/
+        image((PImage)backgroundMovie,0,0,width,height);
 }
 float[] inputCoordinates() {
 	PVector movementVector;
@@ -252,7 +261,7 @@ void loadImages(int maxImages) {
 		images.clear();
 	// read up to maxImages
 	for(int c=1;c <maxImages;c++) {
-		PImage img = loadImage("resources/leaves/highres/leaves_"+nf(c,2)+".png");
+		PImage img = loadImage("leaves/highres/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
 		images.add(img);
@@ -293,3 +302,16 @@ float[] receiveCoordinates() {
   }
   return null;
 }
+
+// Called every time a new frame is available to read
+void movieEvent(Movie m) {
+  m.read();
+  // some issues regarding processing 1.5.1, opengl and video seem to have been resolved by manually calling these
+  //m.loadPixels();
+  //m.updatePixels();
+}
+
+
+
+
+
