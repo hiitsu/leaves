@@ -32,7 +32,7 @@ boolean debug = true;
 float averageTime = 0;
 int averageCounter = 0;
 int averageResetInterval = 100;
-boolean drawMovie = true, drawLeaves = true, drawOverlay = true;
+boolean drawMovie = true, drawLeaves = true, drawOverlay = true, enableFluctuation = true;
 
 void setup() {
 	size(1024, 768,OPENGL);
@@ -59,6 +59,7 @@ void setup() {
         controlP5.addToggle("drawMovie",drawMovie,width-50,310,30,30);
         controlP5.addToggle("drawLeaves",drawLeaves,width-50,360,30,30);
         controlP5.addToggle("drawOverlay",drawOverlay,width-50,410,30,30);
+        controlP5.addToggle("enableFluctuation",enableFluctuation,width-50,460,30,30);
 
 	setLeaves(leafCount);
         backgroundMovie = new Movie(this,"background.mov");
@@ -73,27 +74,32 @@ void draw() {
         if( drawMovie ) 
               image(backgroundMovie,0,0,width,height);
         else 
-           background(0); 
+           background(0);
+           
 	// draw leaves
         if( drawLeaves ) {
-        float elapsed = now - lastUpdateMillis;
+          float elapsed = now - lastUpdateMillis;
 	  if( elapsed > updateInterval ) { // enough time elapsed from last update ?
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
                 //println("force coords:"+Arrays.toString(coordinates));
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
-                forceCoordinates.add(coordinates);
               }
            }
-         // keep force history short
-           while( forceCoordinates.size() > 5 ) {
-             forceCoordinates.remove(0);
-           }	
+              stroke(255);
+          float before = millis();
           for (int i = leaves.size()-1; i >= 0; i--) {
 		((Leaf)leaves.get(i)).update();
+	  }
+          float after = millis();
+          text("Milliseconds to update leaves:"+(int)(after-before),300,300);
+          before = millis();
+          for (int i = leaves.size()-1; i >= 0; i--) {
 		((Leaf)leaves.get(i)).display();
 	  }
+          after = millis();
+          text("Milliseconds to draw leaves:"+(int)(after-before),300,350);
         }
        
 	// draw mask
@@ -102,48 +108,21 @@ void draw() {
         
 	// drawing debug stuff, depth sort not needed
 	if( debug ) {
-		stroke(0,0,255);
-		strokeWeight(2.0);
-		text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
-                text("leafCount: "+leaves.size(),20,40);
-		fill(255,0,0);
-                for(int i =0; i < forceCoordinates.size(); i++ ) {
-                    float[] a = (float[])forceCoordinates.get(i);
-		    line(a[0],a[1],0,a[2],a[3],0);
-                    ellipse(a[2],a[3],20,20);
-                }
-		//text("movement angle:"+nf(degrees(movementAngle),1,2),50+mouseX,mouseY);
-		//text("force angle:"+nf(degrees(forceAngle),1,2),50+mouseX,40+mouseY);
-		//text("normalized force angle:"+nf(degrees(normalizedForceAngle),1,2),50+mouseX,80+mouseY);
-		//strokeWeight(2.0);
-		//fill(255,0,0);
+		stroke(255,255,255,0);
 		
+  		text("use 'S' to save and 'L' load settings, 'H' to show/hide controls",20,20);
+                averageCounter++;
+                if( averageCounter == averageResetInterval ) {
+                  averageCounter = 0;
+                  averageTime = 0;
+                }
+                float generationTime = (millis()-now);
+                averageTime += generationTime;
+                text("Average frame generation time in milliseconds:"+(int)(averageTime/averageCounter),100,100);
+                text("Current frame generation time in milliseconds:"+(int)(generationTime),100,140);
 	}
-        averageCounter++;
-        if( averageCounter == averageResetInterval ) {
-          averageCounter = 0;
-          averageTime = 0;
-        }
-        averageTime += (millis()-now);
-        text("Average frame generation time in milliseconds:"+(int)(averageTime/averageCounter),50,50);
- //popMatrix();
 }
-void drawBackground() {
-	/*textureMode(NORMALIZED);
-	pushMatrix();
-	translate(width/2,height/2,backgroundZ);
-	beginShape(PConstants.QUADS);
-	texture(backgroundMovie);
-	int w = backgroundMovie.width,
-		h = backgroundMovie.height;
-	vertex(-w/2,-h/2,0,0,0);
-	vertex(w/2,-h/2,0,w,0);
-	vertex(w/2,h/2,0,w,h);
-	vertex(-w/2,h/2,0,0,h);
-	endShape();
-	popMatrix();*/
-        
-}
+
 float[] inputCoordinates() {
 	PVector movementVector;
 	if( client != null ){
@@ -198,13 +177,13 @@ void applyForce(float x1, float y1, float x2, float y2) {
 }
 
 void keyPressed() {
+  	if( key == 'd' || key == 'D' )
+		debug = debug ? false : true;
 	if( key == 'h' || key == 'H' ) {
 		if( controlP5.isVisible() ) {
-			debug = false;
 			controlP5.hide();
 		} else {
-			debug = true;
-			controlP5.show();
+	  	        controlP5.show();
 		}
 	} else if( key == 's' || key == 'S' ) {
 		controlP5.saveProperties();
@@ -255,6 +234,10 @@ void drawOverlay(boolean v){
 void drawLeaves(boolean v){
 	drawLeaves = v;
 	println("drawLeaves set to: "+v);
+}
+void enableFluctuation(boolean v){
+	enableFluctuation = v;
+	println("enableFluctuation set to: "+v);
 }
 void network(boolean flag){
 	println("network set to: "+flag);

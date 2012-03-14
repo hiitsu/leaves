@@ -94,15 +94,22 @@ class Leaf {
                 //text("location:"+location.toString(),20,0,10);
 		rotate(angle);
 		noStroke();
-		beginShape(PConstants.QUADS);
-		texture(img);
-		int w = img.width/sizeFactor,
-			h = img.height/sizeFactor;
-		vertex(-w/2,-h/2,map(sin(fluctuations[0][0]),-1,1,-fluctuations[0][2],fluctuations[0][2]),0,0);
-		vertex(w/2,-h/2,map(sin(fluctuations[1][0]),-1,1,-fluctuations[1][2],fluctuations[1][2]),w,0);
-		vertex(w/2,h/2,map(sin(fluctuations[2][0]),-1,1,-fluctuations[2][2],fluctuations[2][2]),w,h);
-		vertex(-w/2,h/2,map(sin(fluctuations[3][0]),-1,1,-fluctuations[3][2],fluctuations[3][2]),0,h);
-		endShape();
+                noFill();
+                noTint();
+                int w = img.width/sizeFactor,
+		   h = img.height/sizeFactor;
+                if( enableFluctuation ) {
+		    beginShape();
+		    texture(img);
+		    vertex(-w/2,-h/2,map(sin(fluctuations[0][0]),-1,1,-fluctuations[0][2],fluctuations[0][2]),0,0);
+		    vertex(w/2,-h/2,map(sin(fluctuations[1][0]),-1,1,-fluctuations[1][2],fluctuations[1][2]),w,0);
+		    vertex(w/2,h/2,map(sin(fluctuations[2][0]),-1,1,-fluctuations[2][2],fluctuations[2][2]),w,h);
+		    vertex(-w/2,h/2,map(sin(fluctuations[3][0]),-1,1,-fluctuations[3][2],fluctuations[3][2]),0,h);
+                    endShape();
+                } else {
+                    image(img,0,0,w,h);
+                }		
+                
                 
 /*
                 if( debug ) {
@@ -113,6 +120,6 @@ class Leaf {
                   text("velocity:"+velocity,20,60,10);
                 }
 */              popMatrix();
-		noTint();
+		
 	}
 }  
