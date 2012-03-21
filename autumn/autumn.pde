@@ -93,14 +93,17 @@ void draw() {
               movieStartedMillis = millis();
             }
         } else {
-           isPlaying = false;
-           backgroundMovie.stop();
+           if( isPlaying ) {
+             isPlaying = false;
+             backgroundMovie.stop();
+             setLeaves(leafCount);
+           }
         }
         
 	// draw video frame
         if( drawMovie && isPlaying ) {
-            //if( now-movieStartedMillis < stopThreshold )
-            //  tint(map(now-movieStartedMillis,0,stopThreshold,0,255));
+            if( now-movieStartedMillis < stopThreshold )
+              tint(map(now-movieStartedMillis,0,stopThreshold,0,255));
             //else tint(map(idleTime,0,stopThreshold,255,0));
             image(backgroundMovie,0,0,width,height);
         }
@@ -119,20 +122,7 @@ void draw() {
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
               }
            }
-        if( wind && idleTime > stopThreshold ) {
-              for (int i = leaves.size()-1; i >= 0; i--) {
-                  Leaf leaf = (Leaf)leaves.get(i);
-                  leaf.increaseFluctuation(0.1);
-                  // randomize point around the center where the wind is blowing the leaf
-                  float px = random(0,width);
-                  float py = random(0,height);
-                  float force = random(0.00001,0.0001);
-                  float lx = leaf.location.x;
-                  float ly = leaf.location.y;
-                  PVector v = new PVector((px-lx)*force,(py-ly)*force,random(0.01,0.1));
-                  leaf.velocity.add(v);
-              }
-         }
+        
           stroke(255);
           float before = millis();
           for (int i = leaves.size()-1; i >= 0; i--) {
@@ -173,6 +163,20 @@ void draw() {
                 text("Last movement:"+(int)(idleTime),100,260);
                
 	}
+}
+void applyWind() {
+  for (int i = leaves.size()-1; i >= 0; i--) {
+        Leaf leaf = (Leaf)leaves.get(i);
+        leaf.increaseFluctuation(0.1);
+        // randomize point around the center where the wind is blowing the leaf
+        float px = random(0,width);
+        float py = random(0,height);
+        float force = random(0.00001,0.0001);
+        float lx = leaf.location.x;
+        float ly = leaf.location.y;
+        PVector v = new PVector((px-lx)*force,(py-ly)*force,random(0.01,0.1));
+        leaf.velocity.add(v);
+    }
 }
 
 float[] inputCoordinates() {
