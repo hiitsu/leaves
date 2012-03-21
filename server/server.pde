@@ -3,7 +3,7 @@ import java.nio.*;
 
 Server server;
 Client client;
-float ox, oy;
+float ox, oy, lastSent = -1;
 void setup() {
   size(400,400);
   frameRate(50);
@@ -16,8 +16,10 @@ void draw() {
 }
 
 void mouseMoved(){
-  if( sqrt(pow(ox-mouseX,2)+pow(oy-mouseY,2)) > 24 ) {
+  float now = millis();
+  if( now-lastSent > 25 && sqrt(pow(ox-mouseX,2)+pow(oy-mouseY,2)) > 4 ) {
     sendVector(ox,oy,mouseX,mouseY);
+    lastSent = millis();
   //receiveVector();
     ox = mouseX;
     oy = mouseY;
@@ -33,6 +35,7 @@ void sendVector(float x1,float y1, float x2, float y2) {
    server.write(byta(map(y1,0,height,0,768)));
    server.write(byta(map(x2,0,width,0,1024)));
    server.write(byta(map(y2,0,height,0,768)));
+   server.write(new byte[] {13,13,13});
 }
 PVector receiveVector() {
   if( client.available() >= 16 ) {

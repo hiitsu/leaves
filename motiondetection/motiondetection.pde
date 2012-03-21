@@ -1,4 +1,4 @@
- import processing.net.*;
+import processing.net.*;
 import controlP5.*;
 import processing.net.*;
 import processing.video.*;
@@ -13,23 +13,24 @@ int videotex = 2; //case 0: videotex = videoimg;//case 1: videotex = videotexbin
 //case 2: videotex = videotexmotion//case 3: videotex = videoteximgmotion; 
 int fade = 25;
 int edgeThreshold = 55;
-int minimumArea = 4,
-    maximumArea = 320*240; // quarter screen blob is still valid
+int minimumArea = 32,
+    maximumArea = 320*240;
 Slider2D leftTop,bottomRight;
-float updateIntervalMillis = 100;
+float updateIntervalMillis = 20;
 float lastUpdateMillis = -1;
 float cx,cy,ox,oy;
 
 ArrayList previousPositions; 
 int MAX_TRACKED = 5;
+int FPS = 25;
 
 void setup() {
   println(Capture.list());
   size(500,600);
-  int FPS = 20;
+
   server = new Server(this, 12345);
   cam = new Capture(this,320,240,"USB Video Class Video",FPS);
-
+  frameRate(FPS);
   // setup the detection parameters
   flob = new Flob(cam, 320, 240);
   flob.setSrcImage(videotex);
@@ -43,7 +44,7 @@ void setup() {
 	controlP5.setAutoInitialization(true);
 
 	// controls on the left side
-	controlP5.addSlider("updateIntervalMillis",20,300,updateIntervalMillis,20,60,30,80);
+	controlP5.addSlider("updateIntervalMillis",5,1000,updateIntervalMillis,20,60,30,80);
 	controlP5.addSlider("minimumArea",4,300,minimumArea,20,160,30,80);
 	controlP5.addSlider("maximumArea",10,19200,maximumArea,20,260,30,80);
 	controlP5.addSlider("edgeThreshold",1,200,edgeThreshold,20,360,30,80);
@@ -124,9 +125,11 @@ void draw() {
                   float ox = coordinates[0];
                   float oy = coordinates[1];
                   float d = sqrt( pow(ox-cx,2) + pow(oy-cy,2) );
-                  if( d < 200 ) {
-                      //println("sending coords");
+                  
+                  if( d < 16 ) {
+                      //println("sending coords:");
                       sendVector(ox,oy,cx,cy);
+                      
                   }
              }
          }
@@ -157,6 +160,7 @@ void draw() {
     noFill();
     rect(80,320-30,320,240);
     text("use 'S' to save and 'L' load settings",20,20);
+    text("FPS:"+frameRate,20,40);
  }
 
 }
@@ -168,6 +172,7 @@ void keyPressed() {
 		controlP5.loadProperties();
 	}
 }
+
 
 void updateIntervalMillis(float v){
 	updateIntervalMillis = v;
@@ -195,6 +200,7 @@ void sendVector(float x1,float y1, float x2, float y2) {
    server.write(byta(map(y1,0,240,0,768)));
    server.write(byta(map(x2,0,320,0,1024)));
    server.write(byta(map(y2,0,240,0,768)));
+   server.write(new byte[]{13,13,13});
 }
 
 byte[] byta(float v){

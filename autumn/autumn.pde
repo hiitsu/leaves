@@ -69,7 +69,7 @@ void setup() {
         
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
-        controlP5.addToggle("wind",wind,width-50,50,30,30);
+        //controlP5.addToggle("wind",wind,width-50,50,30,30);
 	controlP5.addSlider("leafCount",1,1500,leafCount,width-50,110,30,80);
 	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
         controlP5.addToggle("drawMovie",drawMovie,width-50,310,30,30);
@@ -111,13 +111,17 @@ void draw() {
         }
         
 	// draw video frame
+        int startAlpha = 64; float fadePeriod = 4000;
         if( drawMovie && isPlaying ) {
-            if( now-movieStartedMillis < stopThreshold )
-              tint(map(now-movieStartedMillis,0,stopThreshold,128,255));
+            if( now-movieStartedMillis < fadePeriod )
+              tint(map(now-movieStartedMillis,0,fadePeriod,startAlpha,255));
             //else tint(map(idleTime,0,stopThreshold,255,0));
             image(backgroundMovie,0,0,width,height);
         } else {
-           image(backgroundFirstFrame,0,0,width,height); 
+          if( firstFrameTaken ) {
+             tint(startAlpha);
+             image(backgroundFirstFrame,0,0,width,height);
+            }
         }
 
         
@@ -364,18 +368,25 @@ synchronized void addLeaf() {
 }
 
 float[] receiveCoordinates() {
-  if( client.available() >= 16 ) {
-    byte[] data = new byte[16];
+  if( client.available() >= 19 ) {
+    byte[] data = new byte[19];
     int read = client.readBytes(data);
     //println("Read "+ read+ " bytes:"+Arrays.toString(data));
-    ByteBuffer buffer = ByteBuffer.allocate(16);
+    ByteBuffer buffer = ByteBuffer.allocate(19);
     buffer.put(data);
     float x1 = buffer.getFloat(0);
     float y1 = buffer.getFloat(4);
     float x2 = buffer.getFloat(8);
     float y2 = buffer.getFloat(12);
+    byte b1 = buffer.get(16);
+    byte b2 = buffer.get(17);
+    byte b3 = buffer.get(18);
     //println("Received vector:  "+v.toString());
-    return new float[]{x1,y1,x2,y2};
+    // lazy packet delimiter
+    if( b1 == 13 && b1 == b2 && b2 == b3 )
+      return new float[]{x1,y1,x2,y2};
+    println("network packet delimiter NOT FOUND!");
+    return null;
   }
   return null;
 }
