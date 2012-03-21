@@ -6,8 +6,8 @@ import processing.opengl.*; // draw utilizing opengl rendering engine
 
 int leafCount = 1000,
     leafSize = 4,
-    fps = 50,
-    movieFps = 30;
+    fps = 25,
+    movieFps = 25;
 float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
       updateInterval = 25,         // how often leaves should be update
@@ -73,7 +73,7 @@ void setup() {
         controlP5.addToggle("enableFluctuation",enableFluctuation,width-50,460,30,30);
 
 	setLeaves(leafCount);
-        backgroundMovie = new Movie(this,"Video01.mp4");
+        backgroundMovie = new Movie(this,"background.mp4");
         backgroundMovie.frameRate(movieFps);
         backgroundMovie.noLoop();
 }
@@ -97,8 +97,8 @@ void draw() {
         
 	// draw video frame
         if( drawMovie && isPlaying ) {
-            if( now-movieStartedMillis < stopThreshold )
-              tint(map(now-movieStartedMillis,0,stopThreshold,0,255));
+            //if( now-movieStartedMillis < stopThreshold )
+            //  tint(map(now-movieStartedMillis,0,stopThreshold,0,255));
             //else tint(map(idleTime,0,stopThreshold,255,0));
             image(backgroundMovie,0,0,width,height);
         }
