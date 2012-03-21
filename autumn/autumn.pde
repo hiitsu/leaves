@@ -4,9 +4,9 @@ import processing.net.*;    // getting vectors over the network
 import controlP5.*;         // GUI control library
 import processing.opengl.*; // draw utilizing opengl rendering engine
 
-int leafCount = 1000,
+int leafCount = 500,
     leafSize = 4,
-    fps = 25,
+    fps = 50,
     movieFps = 25;
 float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
@@ -42,7 +42,8 @@ boolean drawMovie = true,
   drawOverlay = true, 
   enableFluctuation = true,
   drawDebug = true, 
-  isPlaying = false;
+  isPlaying = false,
+  wind = true;
 
 void setup() {
 	size(1024, 768,OPENGL);
@@ -65,6 +66,7 @@ void setup() {
         
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
+        controlP5.addToggle("wind",wind,width-50,50,30,30);
 	controlP5.addSlider("leafCount",1,1500,leafCount,width-50,110,30,80);
 	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
         controlP5.addToggle("drawMovie",drawMovie,width-50,310,30,30);
@@ -103,7 +105,7 @@ void draw() {
             image(backgroundMovie,0,0,width,height);
         }
 
-           
+        
 	// draw leaves
         float leafUpdate = -1, leafDraw = -1;
         if( drawLeaves ) {
@@ -117,7 +119,21 @@ void draw() {
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
               }
            }
-              stroke(255);
+        if( wind && idleTime > stopThreshold ) {
+              for (int i = leaves.size()-1; i >= 0; i--) {
+                  Leaf leaf = (Leaf)leaves.get(i);
+                  leaf.increaseFluctuation(0.1);
+                  // randomize point around the center where the wind is blowing the leaf
+                  float px = random(0,width);
+                  float py = random(0,height);
+                  float force = random(0.00001,0.0001);
+                  float lx = leaf.location.x;
+                  float ly = leaf.location.y;
+                  PVector v = new PVector((px-lx)*force,(py-ly)*force,random(0.01,0.1));
+                  leaf.velocity.add(v);
+              }
+         }
+          stroke(255);
           float before = millis();
           for (int i = leaves.size()-1; i >= 0; i--) {
 		((Leaf)leaves.get(i)).update();
