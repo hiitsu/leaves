@@ -17,7 +17,8 @@ float distanceThreshold = 100,     // maximum distance when movement vector is a
       stopThreshold = 5000,        // how much waiting before the movie stops
       topVelocity = 10,            // leaf max XY speed
       topSpinSpeed = 0.2,           // leaf max rotation speed
-      backgroundZ = -50;           // background image place in z-axis
+      backgroundZ = -50,           // background image place in z-axis
+      leafMaxZ = 200;              // how high can leaves be kicked?
       
 PVector gravity = new PVector(0,0,4);                // how fast the leaves come down
      
@@ -29,6 +30,8 @@ ArrayList leaves; // of Leaf- objects
 ControlP5 controlP5;
 PImage overlayImage;
 Movie backgroundMovie;
+PImage backgroundFirstFrame = new PImage(1024,768);
+boolean firstFrameTaken = false;
 Client client;
 
 // profiling variables
@@ -42,7 +45,7 @@ boolean drawMovie = true,
   drawOverlay = true, 
   enableFluctuation = true,
   drawDebug = true, 
-  isPlaying = false,
+  isPlaying = true,
   wind = true;
 
 void setup() {
@@ -62,7 +65,7 @@ void setup() {
 	controlP5.addSlider("updateInterval",5,100,updateInterval,20,260,30,80);
 	controlP5.addSlider("topSpinSpeed",0.001,1.0,topSpinSpeed,20,360,30,80);
 	controlP5.addSlider("topVelocity",5,50,topVelocity,20,460,30,80);
-        controlP5.addSlider("stopThreshold",500,20000,stopThreshold,20,560,30,80);
+        controlP5.addSlider("stopThreshold",1000,120000,stopThreshold,20,560,30,80);
         
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
@@ -77,13 +80,19 @@ void setup() {
 	setLeaves(leafCount);
         backgroundMovie = new Movie(this,"background.mp4");
         backgroundMovie.frameRate(movieFps);
-        backgroundMovie.noLoop();
+        backgroundMovie.loop();
 }
 
 void draw() {
-        background(0);
         float now = millis();
         
+        // are we at the end?
+        if( isPlaying && backgroundMovie.time() == backgroundMovie.duration() ) {
+            backgroundMovie.pause();
+            backgroundMovie.jump(0);
+            setLeaves(leafCount);
+        }
+
         // determine if movie should still be played
         float idleTime = (now-lastMovementMillis);
         if( idleTime < stopThreshold ) {
@@ -95,7 +104,8 @@ void draw() {
         } else {
            if( isPlaying ) {
              isPlaying = false;
-             backgroundMovie.stop();
+             backgroundMovie.pause();
+             backgroundMovie.jump(0);
              setLeaves(leafCount);
            }
         }
@@ -103,9 +113,11 @@ void draw() {
 	// draw video frame
         if( drawMovie && isPlaying ) {
             if( now-movieStartedMillis < stopThreshold )
-              tint(map(now-movieStartedMillis,0,stopThreshold,0,255));
+              tint(map(now-movieStartedMillis,0,stopThreshold,128,255));
             //else tint(map(idleTime,0,stopThreshold,255,0));
             image(backgroundMovie,0,0,width,height);
+        } else {
+           image(backgroundFirstFrame,0,0,width,height); 
         }
 
         
@@ -224,7 +236,7 @@ void applyForce(float x1, float y1, float x2, float y2) {
 		// apply more rotation when closer to 90degree angle
 		float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
 		float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,25);
-		if( distance < distanceThreshold ) {
+		if( distance < distanceThreshold && leaf.location.z < leafMaxZ ) {
                                 // TODO: invert z-factor which will recude XY movement
 				float distanceFactor = map(distance,0,distanceThreshold,1,2);
 				leaf.velocity.x += (dx/30.0)*distanceFactor;
@@ -347,7 +359,7 @@ synchronized void setLeaves(int count){
 synchronized void addLeaf() {
   float x = random(0,width);
   float y = random(0,height);
-  float z = random(10,50);
+  float z = random(0,leafMaxZ);
   leaves.add(new Leaf(x,y,z,random(5,20),(PImage)images.get(int(random(0,images.size())))));
 }
 
@@ -371,6 +383,13 @@ float[] receiveCoordinates() {
 // Called every time a new frame is available to read
 void movieEvent(Movie m) {
   m.read();
+  if( !firstFrameTaken ) {
+    try{
+    backgroundFirstFrame = (PImage)backgroundMovie.clone();
+    } catch(Exception e){
+    }
+    firstFrameTaken = true;
+  }
   // some issues regarding processing 1.5.1, opengl and video seem to have been resolved by manually calling these
   //m.loadPixels();
   //m.updatePixels();
