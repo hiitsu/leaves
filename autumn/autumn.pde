@@ -5,12 +5,16 @@ import controlP5.*;         // GUI control library
 import processing.opengl.*; // draw utilizing opengl rendering engine
 
 int leafCount = 1000,
-    leafSize = 3,
-    fps = 50;
+    leafSize = 4,
+    fps = 50,
+    movieFps = 30;
 float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
       movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
       updateInterval = 25,         // how often leaves should be update
       lastUpdateMillis = millis(), // timing helper variable
+      lastMovementMillis = millis(), // last time network send something or mouse was moved
+      movieStartedMillis = millis(), // when was the movie started
+      stopThreshold = 5000,        // how much waiting before the movie stops
       topVelocity = 10,            // leaf max XY speed
       topSpinSpeed = 0.2,           // leaf max rotation speed
       backgroundZ = -50;           // background image place in z-axis
@@ -19,20 +23,26 @@ PVector gravity = new PVector(0,0,4);                // how fast the leaves come
      
 float lastMouseX = -1,
       lastMouseY = -1;
-ArrayList forceCoordinates = new ArrayList(); // of float[]
+ArrayList<float[]> forceCoordinates = new ArrayList(); // of float[]
 ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
 ControlP5 controlP5;
 PImage overlayImage;
 Movie backgroundMovie;
 Client client;
-boolean debug = true;
 
 // profiling variables
 float averageTime = 0;
 int averageCounter = 0;
 int averageResetInterval = 100;
-boolean drawMovie = true, drawLeaves = true, drawOverlay = true, enableFluctuation = true;
+
+// flags to optionally enable/disable drawing or feature
+boolean drawMovie = true, 
+  drawLeaves = true, 
+  drawOverlay = true, 
+  enableFluctuation = true,
+  drawDebug = true, 
+  isPlaying = false;
 
 void setup() {
 	size(1024, 768,OPENGL);
@@ -40,7 +50,7 @@ void setup() {
 	hint(DISABLE_DEPTH_TEST);
 	overlayImage = loadImage("overlay.png");
 	// call this before setLeaves
-	loadImages(2);
+	loadImages(50);
 
 	controlP5 = new ControlP5(this);
 	controlP5.setAutoInitialization(true);
@@ -51,7 +61,8 @@ void setup() {
 	controlP5.addSlider("updateInterval",5,100,updateInterval,20,260,30,80);
 	controlP5.addSlider("topSpinSpeed",0.001,1.0,topSpinSpeed,20,360,30,80);
 	controlP5.addSlider("topVelocity",5,50,topVelocity,20,460,30,80);
-
+        controlP5.addSlider("stopThreshold",500,20000,stopThreshold,20,560,30,80);
+        
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
 	controlP5.addSlider("leafCount",1,1500,leafCount,width-50,110,30,80);
@@ -62,19 +73,36 @@ void setup() {
         controlP5.addToggle("enableFluctuation",enableFluctuation,width-50,460,30,30);
 
 	setLeaves(leafCount);
-        backgroundMovie = new Movie(this,"background.mov");
-        backgroundMovie.frameRate(fps);
-        backgroundMovie.loop();
+        backgroundMovie = new Movie(this,"Video01.mp4");
+        backgroundMovie.frameRate(movieFps);
+        backgroundMovie.noLoop();
 }
 
 void draw() {
+        background(0);
         float now = millis();
         
+        // determine if movie should still be played
+        float idleTime = (now-lastMovementMillis);
+        if( idleTime < stopThreshold ) {
+            if( !isPlaying ) {
+              isPlaying = true;
+              backgroundMovie.play();
+              movieStartedMillis = millis();
+            }
+        } else {
+           isPlaying = false;
+           backgroundMovie.stop();
+        }
+        
 	// draw video frame
-        if( drawMovie ) 
-              image(backgroundMovie,0,0,width,height);
-        else 
-           background(0);
+        if( drawMovie && isPlaying ) {
+            if( now-movieStartedMillis < stopThreshold )
+              tint(map(now-movieStartedMillis,0,stopThreshold,0,255));
+            //else tint(map(idleTime,0,stopThreshold,255,0));
+            image(backgroundMovie,0,0,width,height);
+        }
+
            
 	// draw leaves
         float leafUpdate = -1, leafDraw = -1;
@@ -84,6 +112,7 @@ void draw() {
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
+                lastMovementMillis = now;
                 //println("force coords:"+Arrays.toString(coordinates));
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
               }
@@ -108,9 +137,9 @@ void draw() {
             image(overlayImage,0,0,width,height);        
         
 	// drawing debug stuff, depth sort not needed
-	if( debug ) {
-		stroke(255,0);
-		noTint();
+	if( drawDebug ) {
+		stroke(255);
+                fill(255);
   		text("use 'S' to save, and 'L' load settings, 'H' to show/hide controls, 'D' to show/hide FPS",20,20);
                 averageCounter++;
                 if( averageCounter == averageResetInterval ) {
@@ -125,6 +154,8 @@ void draw() {
                 text("FPS: " + Math.floor(frameRate),100,180);
                 text("Milliseconds to draw leaves:"+(int)(leafDraw),100,220);
                 text("Milliseconds to update leaves:"+(int)(leafUpdate),100,240);
+                text("Last movement:"+(int)(idleTime),100,260);
+               
 	}
 }
 
@@ -133,6 +164,9 @@ float[] inputCoordinates() {
 	if( client != null ){
 		return receiveCoordinates();
 	} else {
+                // return null in case mouse outside window
+                if( mouseX == lastMouseX && mouseY == lastMouseY )
+                  return null;
 		float[] arr = new float[] { lastMouseX, lastMouseY, mouseX, mouseY };
 		lastMouseX = mouseX;
 		lastMouseY = mouseY;
@@ -171,11 +205,12 @@ void applyForce(float x1, float y1, float x2, float y2) {
 		float rotationFactor = map(abs(degrees(normalizedForceAngle)),0,90,0,1);
 		float zFactor = map(90-abs(degrees(normalizedForceAngle)),0,90,0,25);
 		if( distance < distanceThreshold ) {
+                                // TODO: invert z-factor which will recude XY movement
 				float distanceFactor = map(distance,0,distanceThreshold,1,2);
 				leaf.velocity.x += (dx/30.0)*distanceFactor;
 				leaf.velocity.y += (dy/30.0)*distanceFactor;
+                                leaf.location.z += zFactor*distanceFactor;
 				leaf.spinSpeed += (rotationFactor/6)*rotationDirection;
-				leaf.location.z += zFactor*distanceFactor;
 				leaf.increaseFluctuation(distanceFactor*5);
 		}
 	}
@@ -183,7 +218,7 @@ void applyForce(float x1, float y1, float x2, float y2) {
 
 void keyPressed() {
   	if( key == 'd' || key == 'D' )
-		debug = debug ? false : true;
+		drawDebug = drawDebug ? false : true;
 	if( key == 'h' || key == 'H' ) {
 		if( controlP5.isVisible() ) {
 			controlP5.hide();
@@ -205,6 +240,10 @@ void distanceThreshold(float v){
 void movementThreshold(float v){
 	movementThreshold = v;
 	println("movementThreshold set to: "+v);
+}
+void stopThreshold(float v){
+	stopThreshold = v;
+	println("stopThreshold set to: "+v);
 }
 void updateInterval(float v){
 	updateInterval = v;

@@ -1,4 +1,4 @@
-import processing.net.*;
+ import processing.net.*;
 import controlP5.*;
 import processing.net.*;
 import processing.video.*;
@@ -28,7 +28,7 @@ void setup() {
   size(500,600);
   int FPS = 20;
   server = new Server(this, 12345);
-  cam = new Capture(this,160,120,"USB Video Class Video",FPS);
+  cam = new Capture(this,320,240,"USB Video Class Video",FPS);
 
   // setup the detection parameters
   flob = new Flob(cam, 320, 240);
@@ -37,7 +37,7 @@ void setup() {
   flob.setBlur(0);
   flob.setOm(1);
   flob.setFade(fade);
-  flob.setMirror(false,false);
+  flob.setMirror(true,true);
 
         controlP5 = new ControlP5(this);
 	controlP5.setAutoInitialization(true);
