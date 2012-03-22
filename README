@@ -1,0 +1,4 @@
+you need processing 1.5.1 and 2.0 alpha to run these sketches
+copy libraries to library folder, do it for both processing versions
+run motiondetection with processing 1.5.1
+run leaves with processing 2.0 alpha
