@@ -29,7 +29,7 @@ void setup() {
   size(500,600);
 
   server = new Server(this, 12345);
-  cam = new Capture(this,320,240,"USB Video Class Video",FPS);
+  cam = new Capture(this,320,240,FPS);
   frameRate(FPS);
   // setup the detection parameters
   flob = new Flob(cam, 320, 240);
@@ -126,7 +126,7 @@ void draw() {
                   float oy = coordinates[1];
                   float d = sqrt( pow(ox-cx,2) + pow(oy-cy,2) );
                   
-                  if( d < 16 ) {
+                  if( d < 16 && d > 3 ) {
                       //println("sending coords:");
                       sendVector(ox,oy,cx,cy);
                       
