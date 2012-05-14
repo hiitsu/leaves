@@ -14,7 +14,6 @@ float distanceThreshold = 100,     // maximum distance when movement vector is a
       lastUpdateMillis = millis(), // timing helper variable
       lastMovementMillis = millis(), // last time network send something or mouse was moved
       movieStartedMillis = millis(), // when was the movie started
-      stopThreshold = 5000,        // how much waiting before the movie stops
       topVelocity = 10,            // leaf max XY speed
       topSpinSpeed = 0.2,           // leaf max rotation speed
       backgroundZ = -50,           // background image place in z-axis
@@ -44,9 +43,9 @@ boolean drawMovie = true,
   drawLeaves = true, 
   drawOverlay = true, 
   enableFluctuation = true,
-  drawDebug = true, 
+  drawDebug = false, 
   isPlaying = true,
-  wind = true;
+  wind = false;
 
 void setup() {
 	size(1024, 768,OPENGL);
@@ -57,7 +56,7 @@ void setup() {
 	loadImages(50);
 
 	controlP5 = new ControlP5(this);
-	controlP5.setAutoInitialization(true);
+	
 
 	// controls on the left side
 	controlP5.addSlider("distanceThreshold",50,200,distanceThreshold,20,60,30,80);
@@ -65,7 +64,6 @@ void setup() {
 	controlP5.addSlider("updateInterval",5,100,updateInterval,20,260,30,80);
 	controlP5.addSlider("topSpinSpeed",0.001,1.0,topSpinSpeed,20,360,30,80);
 	controlP5.addSlider("topVelocity",5,50,topVelocity,20,460,30,80);
-        controlP5.addSlider("stopThreshold",1000,120000,stopThreshold,20,560,30,80);
         
 	// controls on the right side
 	controlP5.addToggle("network",false,width-50,10,30,30);
@@ -76,38 +74,32 @@ void setup() {
         controlP5.addToggle("drawLeaves",drawLeaves,width-50,360,30,30);
         controlP5.addToggle("drawOverlay",drawOverlay,width-50,410,30,30);
         controlP5.addToggle("enableFluctuation",enableFluctuation,width-50,460,30,30);
-
+        controlP5.hide();
+        //controlP5.setAutoInitialization(true);
 	setLeaves(leafCount);
         backgroundMovie = new Movie(this,"background.mp4");
         backgroundMovie.frameRate(movieFps);
         backgroundMovie.loop();
+        network(true);
+        stop();
 }
-
+void play() {
+      isPlaying = true;
+      backgroundMovie.play();
+      movieStartedMillis = millis();
+}
+void stop(){
+            backgroundMovie.pause();
+            backgroundMovie.jump(0);
+            setLeaves(leafCount);
+            isPlaying = false;  
+}
 void draw() {
         float now = millis();
         
         // are we at the end?
         if( isPlaying && backgroundMovie.time() == backgroundMovie.duration() ) {
-            backgroundMovie.pause();
-            backgroundMovie.jump(0);
-            setLeaves(leafCount);
-        }
-
-        // determine if movie should still be played
-        float idleTime = (now-lastMovementMillis);
-        if( idleTime < stopThreshold ) {
-            if( !isPlaying ) {
-              isPlaying = true;
-              backgroundMovie.play();
-              movieStartedMillis = millis();
-            }
-        } else {
-           if( isPlaying ) {
-             isPlaying = false;
-             backgroundMovie.pause();
-             backgroundMovie.jump(0);
-             setLeaves(leafCount);
-           }
+          stop();
         }
         
 	// draw video frame
@@ -123,7 +115,6 @@ void draw() {
              image(backgroundFirstFrame,0,0,width,height);
             }
         }
-
         
 	// draw leaves
         float leafUpdate = -1, leafDraw = -1;
@@ -133,7 +124,7 @@ void draw() {
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
-                lastMovementMillis = now;
+                if( !isPlaying ) play();
                 //println("force coords:"+Arrays.toString(coordinates));
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
               }
@@ -176,7 +167,7 @@ void draw() {
                 text("FPS: " + Math.floor(frameRate),100,180);
                 text("Milliseconds to draw leaves:"+(int)(leafDraw),100,220);
                 text("Milliseconds to update leaves:"+(int)(leafUpdate),100,240);
-                text("Last movement:"+(int)(idleTime),100,260);
+                //text("Last movement:"+(int)(idleTime),100,260);
                
 	}
 }
@@ -277,10 +268,6 @@ void movementThreshold(float v){
 	movementThreshold = v;
 	println("movementThreshold set to: "+v);
 }
-void stopThreshold(float v){
-	stopThreshold = v;
-	println("stopThreshold set to: "+v);
-}
 void updateInterval(float v){
 	updateInterval = v;
 	println("updateInterval set to: "+v);
@@ -321,14 +308,13 @@ void enableFluctuation(boolean v){
 }
 void network(boolean flag){
 	println("network set to: "+flag);
-	if( flag ) {
-		client = new Client(this, "127.0.0.1", 12345);
-	} else {
-		if( client == null )
-			return;
-		client.clear();
+	if( client != null ) {
+	        client.clear();
 		client.stop();
 		client = null;
+        }
+	if( flag ) {
+            client = new Client(this, "127.0.0.1", 12345);
 	}
 }
 // read images files from disk into ArrayList<PImage> images
