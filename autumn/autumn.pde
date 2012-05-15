@@ -77,7 +77,7 @@ void setup() {
         controlP5.hide();
         //controlP5.setAutoInitialization(true);
 	setLeaves(leafCount);
-        backgroundMovie = new Movie(this,"background.mp4");
+        backgroundMovie = new Movie(this,"Projectie_Gluco_v03.mp4");
         backgroundMovie.frameRate(movieFps);
         backgroundMovie.loop();
         network(true);
@@ -327,7 +327,7 @@ void loadImages(int maxImages) {
 		images.clear();
 	// read up to maxImages
 	for(int c=1;c <maxImages;c++) {
-		PImage img = loadImage("leaves/highres/leaves_"+nf(c,2)+".png");
+		PImage img = loadImage("leaves2/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
                 img.resize(256,256);
