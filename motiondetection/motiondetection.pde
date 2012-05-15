@@ -1,3 +1,4 @@
+import codeanticode.gsvideo.*;
 import processing.net.*;
 import controlP5.*;
 import processing.net.*;
@@ -6,35 +7,69 @@ import s373.flob.*;
 
 ControlP5 controlP5;
 Server server;
-Capture cam;
+GSCapture cam;
 Flob flob;
 ArrayList blobs; 
-int videotex = 2; //case 0: videotex = videoimg;//case 1: videotex = videotexbin; 
+int videotex = 3; //case 0: videotex = videoimg;//case 1: videotex = videotexbin; 
 //case 2: videotex = videotexmotion//case 3: videotex = videoteximgmotion; 
-int fade = 25;
-int edgeThreshold = 55;
+int fade = 40;
+int edgeThreshold = 40;
 int minimumArea = 32,
-    maximumArea = 320*240;
+    maximumArea = 160*120;
 Slider2D leftTop,bottomRight;
 float updateIntervalMillis = 20;
 float lastUpdateMillis = -1;
 float cx,cy,ox,oy;
 
 ArrayList previousPositions; 
-int MAX_TRACKED = 5;
+int MAX_TRACKED = 10;
 int FPS = 25;
 
 void setup() {
-  println(Capture.list());
+
+  String[] cameras = GSCapture.list();
+  
+  if (cameras.length == 0)
+  {
+    println("There are no cameras available for capture.");
+    exit();
+  } else {
+    println("Available cameras:");
+    for (int i = 0; i < cameras.length; i++) {
+      println(cameras[i]);
+    }
+    cam = new GSCapture(this, 160, 120, cameras[0]);
+    cam.start();    
+
+    
+    // You can get the resolutions supported by the
+    // capture device using the resolutions() method.
+    // It must be called after creating the capture 
+    // object. 
+    int[][] res = cam.resolutions();
+    for (int i = 0; i < res.length; i++) {
+      println(res[i][0] + "x" + res[i][1]);
+    } 
+    
+  
+    
+    // You can also get the framerates supported by the
+    // capture device:
+    String[] fps = cam.framerates();
+    for (int i = 0; i < fps.length; i++) {
+      println(fps[i]);
+    } 
+       
+  }
   size(500,600);
 
   server = new Server(this, 12345);
-  cam = new Capture(this,320,240,FPS);
+  //cam = new Capture(this,160,120,FPS);
   frameRate(FPS);
   // setup the detection parameters
-  flob = new Flob(cam, 320, 240);
+  flob = new Flob(cam, 160,120);
   flob.setSrcImage(videotex);
-  flob.setBackground(cam);
+  //flob.setBackground(cam);
   flob.setBlur(0);
   flob.setOm(1);
   flob.setFade(fade);
@@ -77,6 +112,11 @@ void draw() {
         
         // area validations
         float area = blob.dimx * blob.dimy;
+        fill(0,255,0,64);
+        stroke(0,255,0,64);
+        rectMode(CENTER);
+        rect(blob.cx,blob.cy,blob.dimx,blob.dimy);
+        rectMode(CORNER);
         if( area < minimumArea || area > maximumArea ) {
            //println("area too big or small");
            continue;
@@ -96,11 +136,10 @@ void draw() {
             
             validIndices.add(i);
             // ok we are tracking this blob, so draw a box around it
-            fill(0,255,255,64);
-            stroke(0,255,0,64);
-            rectMode(CENTER);
             //float mappedX = map(blob.cx,0,
-            
+            fill(0,0,255,64);
+            stroke(0,0,255,64);
+            rectMode(CENTER);            
             rect(blob.cx,blob.cy,blob.dimx,blob.dimy);
             
             rectMode(CORNER);
@@ -126,7 +165,7 @@ void draw() {
                   float oy = coordinates[1];
                   float d = sqrt( pow(ox-cx,2) + pow(oy-cy,2) );
                   
-                  if( d < 16 && d > 3 ) {
+                  if( d < 20 && d > 1.0 ) {
                       //println("sending coords:");
                       sendVector(ox,oy,cx,cy);
                       
@@ -196,10 +235,10 @@ void fade(int v){
         flob.setFade(fade);
 }
 void sendVector(float x1,float y1, float x2, float y2) {
-   server.write(byta(map(x1,0,320,0,1024)));
-   server.write(byta(map(y1,0,240,0,768)));
-   server.write(byta(map(x2,0,320,0,1024)));
-   server.write(byta(map(y2,0,240,0,768)));
+   server.write(byta(map(x1,0,160,0,1024)));
+   server.write(byta(map(y1,0,120,0,768)));
+   server.write(byta(map(x2,0,160,0,1024)));
+   server.write(byta(map(y2,0,120,0,768)));
    server.write(new byte[]{13,13,13});
 }
 

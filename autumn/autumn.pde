@@ -1,8 +1,9 @@
-import processing.video.*;  // playing background
+import processing.opengl.*; // draw utilizing opengl rendering engine
+import codeanticode.gsvideo.*;
+import codeanticode.glgraphics.*;
 import java.nio.*;          // for the bytebuffer
 import processing.net.*;    // getting vectors over the network
 import controlP5.*;         // GUI control library
-import processing.opengl.*; // draw utilizing opengl rendering engine
 
 int leafCount = 500,
     leafSize = 4,
@@ -28,9 +29,9 @@ ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
 ControlP5 controlP5;
 PImage overlayImage;
-Movie backgroundMovie;
-PImage backgroundFirstFrame = new PImage(1024,768);
-boolean firstFrameTaken = false;
+GSMovie backgroundMovie;
+GLTexture tex;
+
 Client client;
 
 // profiling variables
@@ -44,19 +45,17 @@ boolean drawMovie = true,
   drawOverlay = true, 
   enableFluctuation = true,
   drawDebug = false, 
-  isPlaying = true,
   wind = false;
 
 void setup() {
-	size(1024, 768,OPENGL);
-	frameRate(fps);
+	size(1024, 768, GLConstants.GLGRAPHICS);
+	//frameRate(fps);
 	hint(DISABLE_DEPTH_TEST);
 	overlayImage = loadImage("overlay.png");
 	// call this before setLeaves
 	loadImages(50);
 
 	controlP5 = new ControlP5(this);
-	
 
 	// controls on the left side
 	controlP5.addSlider("distanceThreshold",50,200,distanceThreshold,20,60,30,80);
@@ -77,43 +76,42 @@ void setup() {
         controlP5.hide();
         //controlP5.setAutoInitialization(true);
 	setLeaves(leafCount);
-        backgroundMovie = new Movie(this,"Projectie_Gluco_v03.mp4");
-        backgroundMovie.frameRate(movieFps);
-        backgroundMovie.loop();
+        backgroundMovie = new GSMovie(this,"Projectie_Gluco_v03.mp4");
+        tex = new GLTexture(this);
+        backgroundMovie.setPixelDest(tex);
+        backgroundMovie.noLoop();
+//        backgroundMovie.frameRate(movieFps);
         network(true);
-        stop();
+        playIt();
 }
-void play() {
-      isPlaying = true;
+void playIt() {
       backgroundMovie.play();
       movieStartedMillis = millis();
 }
-void stop(){
-            backgroundMovie.pause();
-            backgroundMovie.jump(0);
+void stopIt(){
+    backgroundMovie.jump(0);
+            backgroundMovie.stop();
             setLeaves(leafCount);
-            isPlaying = false;  
 }
 void draw() {
         float now = millis();
         
         // are we at the end?
-        if( isPlaying && backgroundMovie.time() == backgroundMovie.duration() ) {
-          stop();
+        //  
+        if( backgroundMovie.isPlaying() && backgroundMovie.duration() > 0.0 && backgroundMovie.time() >= backgroundMovie.duration()-1 ){
+          println( backgroundMovie.time() + " - "+backgroundMovie.duration() );
+//        if( backgroundMovie.isPlaying() == false && backgroundMovie.isPaused() == false ) {
+          stopIt();
         }
         
 	// draw video frame
         int startAlpha = 64; float fadePeriod = 4000;
-        if( drawMovie && isPlaying ) {
+        if( drawMovie ) {
             if( now-movieStartedMillis < fadePeriod )
               tint(map(now-movieStartedMillis,0,fadePeriod,startAlpha,255));
             //else tint(map(idleTime,0,stopThreshold,255,0));
-            image(backgroundMovie,0,0,width,height);
-        } else {
-          if( firstFrameTaken ) {
-             tint(startAlpha);
-             image(backgroundFirstFrame,0,0,width,height);
-            }
+             tex.putPixelsIntoTexture();
+              image(tex,0,0,width,height);
         }
         
 	// draw leaves
@@ -124,7 +122,8 @@ void draw() {
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
-                if( !isPlaying ) play();
+                if( !backgroundMovie.isPlaying() || backgroundMovie.isPaused() ) 
+                  playIt();
                 //println("force coords:"+Arrays.toString(coordinates));
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
               }
@@ -378,15 +377,8 @@ float[] receiveCoordinates() {
 }
 
 // Called every time a new frame is available to read
-void movieEvent(Movie m) {
+void movieEvent(GSMovie m) {
   m.read();
-  if( !firstFrameTaken ) {
-    try{
-    backgroundFirstFrame = (PImage)backgroundMovie.clone();
-    } catch(Exception e){
-    }
-    firstFrameTaken = true;
-  }
   // some issues regarding processing 1.5.1, opengl and video seem to have been resolved by manually calling these
   //m.loadPixels();
   //m.updatePixels();
