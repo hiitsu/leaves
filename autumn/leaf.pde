@@ -4,14 +4,14 @@ class Leaf {
 	PImage img;
 	PVector velocity ,location, acceleration;
 	float angle,spinSpeed;
-        int sizeFactor;
+        float sizeFactor;
         float[][] fluctuations = new float[4][3]; // four corners, phase, shift speed, and z-range
 
 	Leaf(float x, float y, float z,PImage img) {
 		this.location = new PVector(x,y,z);
 		this.velocity  = new PVector(0,0,0);
 		this.acceleration  = new PVector(0.5,0.5,0.0);
-                this.sizeFactor = 1+(int)random((int)leafSize/4,leafSize);
+                this.sizeFactor = random(leafSize/4,leafSize);
 		this.angle = 0;
 		this.spinSpeed = 0.01;
 		this.img = img;
@@ -88,7 +88,6 @@ class Leaf {
 	}
 
 	void display() {
-                textureMode(NORMALIZED);
 		pushMatrix();
 		translate(location.x,location.y,location.z);
                 //text("location:"+location.toString(),20,0,10);
@@ -96,8 +95,9 @@ class Leaf {
 		noStroke();
                 noFill();
                 noTint();
-                int w = img.width/sizeFactor,
-		   h = img.height/sizeFactor;
+                //textureMode(IMAGE);
+                float w = img.width*sizeFactor,
+		   h = img.height*sizeFactor;
                 if( enableFluctuation ) {
 		    beginShape();
 		    texture(img);

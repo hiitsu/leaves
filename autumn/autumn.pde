@@ -1,6 +1,4 @@
-import processing.opengl.*; // draw utilizing opengl rendering engine
-import codeanticode.gsvideo.*;
-import codeanticode.glgraphics.*;
+import processing.video.*;
 import java.nio.*;          // for the bytebuffer
 import processing.net.*;    // getting vectors over the network
 import controlP5.*;         // GUI control library
@@ -29,8 +27,7 @@ ArrayList images; // of PImages- objects
 ArrayList leaves; // of Leaf- objects
 ControlP5 controlP5;
 PImage overlayImage;
-GSMovie backgroundMovie;
-GLTexture tex;
+Movie backgroundMovie;
 
 Client client;
 
@@ -48,9 +45,10 @@ boolean drawMovie = true,
   wind = false;
 
 void setup() {
-	size(1024, 768, GLConstants.GLGRAPHICS);
+	size(1024, 768,P3D);
 	//frameRate(fps);
 	hint(DISABLE_DEPTH_TEST);
+        hint(DISABLE_DEPTH_SORT);
 	overlayImage = loadImage("overlay.png");
 	// call this before setLeaves
 	loadImages(50);
@@ -76,12 +74,10 @@ void setup() {
         controlP5.hide();
         //controlP5.setAutoInitialization(true);
 	setLeaves(leafCount);
-        backgroundMovie = new GSMovie(this,"Projectie_Gluco_v03.mp4");
-        tex = new GLTexture(this);
-        backgroundMovie.setPixelDest(tex);
+        backgroundMovie = new Movie(this,"Projectie_Gluco_v03.mp4");
         backgroundMovie.noLoop();
 //        backgroundMovie.frameRate(movieFps);
-        network(true);
+        network(false);
         playIt();
 }
 void playIt() {
@@ -98,7 +94,7 @@ void draw() {
         
         // are we at the end?
         //  
-        if( backgroundMovie.isPlaying() && backgroundMovie.duration() > 0.0 && backgroundMovie.time() >= backgroundMovie.duration()-1 ){
+        if( backgroundMovie.time() > 0 && backgroundMovie.duration() > 0.0 && backgroundMovie.time() >= backgroundMovie.duration()-1 ){
           println( backgroundMovie.time() + " - "+backgroundMovie.duration() );
 //        if( backgroundMovie.isPlaying() == false && backgroundMovie.isPaused() == false ) {
           stopIt();
@@ -110,8 +106,8 @@ void draw() {
             if( now-movieStartedMillis < fadePeriod )
               tint(map(now-movieStartedMillis,0,fadePeriod,startAlpha,255));
             //else tint(map(idleTime,0,stopThreshold,255,0));
-             tex.putPixelsIntoTexture();
-              image(tex,0,0,width,height);
+            
+              image(backgroundMovie,0,0,width,height);
         }
         
 	// draw leaves
@@ -122,7 +118,7 @@ void draw() {
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
-                if( !backgroundMovie.isPlaying() || backgroundMovie.isPaused() ) 
+                if( backgroundMovie.time() == 0 ) 
                   playIt();
                 //println("force coords:"+Arrays.toString(coordinates));
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
@@ -377,8 +373,9 @@ float[] receiveCoordinates() {
 }
 
 // Called every time a new frame is available to read
-void movieEvent(GSMovie m) {
-  m.read();
+void movieEvent(Movie m) {
+  if( m != null )
+    m.read();
   // some issues regarding processing 1.5.1, opengl and video seem to have been resolved by manually calling these
   //m.loadPixels();
   //m.updatePixels();
