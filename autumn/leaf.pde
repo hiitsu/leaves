@@ -1,5 +1,3 @@
-// Simple bouncing ball class
-
 class Leaf {
 	PImage img;
 	PVector velocity ,location, acceleration;
@@ -11,7 +9,7 @@ class Leaf {
 		this.location = new PVector(x,y,z);
 		this.velocity  = new PVector(0,0,0);
 		this.acceleration  = new PVector(0.5,0.5,0.0);
-                this.sizeFactor = random(leafSize/4,leafSize);
+                this.sizeFactor = random(1,leafSize);
 		this.angle = 0;
 		this.spinSpeed = 0.01;
 		this.img = img;
@@ -24,22 +22,24 @@ class Leaf {
         void randomizeFluctuation(){
           for(int i=0; i <4; i++){
             fluctuations[i][0] = random(0,PI/2);
-            fluctuations[i][1] = random(0.01,0.20);
-            fluctuations[i][2] = random(5,20);
+            fluctuations[i][1] = random(0.1,0.2);
+            fluctuations[i][2] = random(1,50);
           }
         }
         void increaseFluctuation(float factor){
            for(int i=0; i <4; i++) {
               float v = fluctuations[i][2];
-              v += factor;
-              if( v > 30 ) v = 30;
+              if( v < 50 )
+                v += factor;
               fluctuations[i][2] = v;
            }
         }
         void reduceFluctuation(){
            for(int i=0; i <4; i++) {
               float v = fluctuations[i][2];
-              if( v > 0 ) v -= 0.4;
+              v -= 0.8;
+              if( v < 0 ) 
+                  v = 0;
               fluctuations[i][2] = v;
            }
         }        
@@ -88,6 +88,8 @@ class Leaf {
 	}
 
 	void display() {
+                rectMode(CENTER);
+                shapeMode(CENTER);
 		pushMatrix();
 		translate(location.x,location.y,location.z);
                 //text("location:"+location.toString(),20,0,10);
@@ -95,31 +97,29 @@ class Leaf {
 		noStroke();
                 noFill();
                 noTint();
-                //textureMode(IMAGE);
-                float w = img.width*sizeFactor,
-		   h = img.height*sizeFactor;
-                if( enableFluctuation ) {
-		    beginShape();
-		    texture(img);
-		    vertex(-w/2,-h/2,map(sin(fluctuations[0][0]),-1,1,-fluctuations[0][2],fluctuations[0][2]),0,0);
-		    vertex(w/2,-h/2,map(sin(fluctuations[1][0]),-1,1,-fluctuations[1][2],fluctuations[1][2]),w,0);
-		    vertex(w/2,h/2,map(sin(fluctuations[2][0]),-1,1,-fluctuations[2][2],fluctuations[2][2]),w,h);
-		    vertex(-w/2,h/2,map(sin(fluctuations[3][0]),-1,1,-fluctuations[3][2],fluctuations[3][2]),0,h);
-                    endShape();
-                } else {
-                    image(img,0,0,w,h);
-                }		
-                
-                
-/*
-                if( debug ) {
+    
+                float ww = (float)img.width,
+		   hh = (float)img.height,
+                   w = ww*(0.5+0.25*sizeFactor),
+                   h = hh*(0.5+0.25*sizeFactor);
+                   
+ 	    beginShape(QUADS);
+	    texture(img);
+	    vertex(-w/2,-h/2,0+map(sin(fluctuations[0][0]),-1,1,-fluctuations[0][2],fluctuations[0][2]),0,0);
+	    vertex(w/2,-h/2,0+map(sin(fluctuations[1][0]),-1,1,-fluctuations[1][2],fluctuations[1][2]),ww,0);
+	    vertex(w/2,h/2,0+map(sin(fluctuations[2][0]),-1,1,-fluctuations[2][2],fluctuations[2][2]),ww,hh);
+	    vertex(-w/2,h/2,0+map(sin(fluctuations[3][0]),-1,1,-fluctuations[3][2],fluctuations[3][2]),0,hh);
+            endShape();
+
+                if( drawDebug ) {
   		  fill(255,0,0);
   		  sphere(2);
+                  text("angle:"+location,20,-40,10);
                   text("angle:"+nf(angle,2,1),20,0,10);
                   text("spin:"+nf(spinSpeed,1,5),20,40,10);
                   text("velocity:"+velocity,20,60,10);
                 }
-*/              popMatrix();
+              popMatrix();
 		
 	}
 }  

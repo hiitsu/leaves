@@ -3,20 +3,20 @@ import java.nio.*;          // for the bytebuffer
 import processing.net.*;    // getting vectors over the network
 import controlP5.*;         // GUI control library
 
-int leafCount = 500,
+int leafCount = 250,
     leafSize = 4,
-    fps = 50,
+    fps = 40,
     movieFps = 25;
-float distanceThreshold = 100,     // maximum distance when movement vector is applied to leaves
-      movementThreshold = 20,      // distance blob has to move before it movement vector gets applied to leaves
+float distanceThreshold = 125,     // maximum distance when movement vector is applied to leaves
+      movementThreshold = 15,      // distance blob has to move before it movement vector gets applied to leaves
       updateInterval = 25,         // how often leaves should be update
       lastUpdateMillis = millis(), // timing helper variable
       lastMovementMillis = millis(), // last time network send something or mouse was moved
       movieStartedMillis = millis(), // when was the movie started
-      topVelocity = 10,            // leaf max XY speed
-      topSpinSpeed = 0.2,           // leaf max rotation speed
+      topVelocity = 20,            // leaf max XY speed
+      topSpinSpeed = 0.5,           // leaf max rotation speed
       backgroundZ = -50,           // background image place in z-axis
-      leafMaxZ = 200;              // how high can leaves be kicked?
+      leafMaxZ = 250;              // how high can leaves be kicked?
       
 PVector gravity = new PVector(0,0,4);                // how fast the leaves come down
      
@@ -40,13 +40,12 @@ int averageResetInterval = 100;
 boolean drawMovie = true, 
   drawLeaves = true, 
   drawOverlay = true, 
-  enableFluctuation = true,
   drawDebug = false, 
   wind = false;
 
 void setup() {
-	size(1024, 768,P3D);
-	//frameRate(fps);
+	size(1024, 768,OPENGL);
+	frameRate(fps);
 	hint(DISABLE_DEPTH_TEST);
         hint(DISABLE_DEPTH_SORT);
 	overlayImage = loadImage("overlay.png");
@@ -66,37 +65,34 @@ void setup() {
 	controlP5.addToggle("network",false,width-50,10,30,30);
         //controlP5.addToggle("wind",wind,width-50,50,30,30);
 	controlP5.addSlider("leafCount",1,1500,leafCount,width-50,110,30,80);
-	controlP5.addSlider("leafSize",1,10,leafSize,width-50,210,30,80);
+	controlP5.addSlider("leafSize",1,5,leafSize,width-50,210,30,80);
         controlP5.addToggle("drawMovie",drawMovie,width-50,310,30,30);
         controlP5.addToggle("drawLeaves",drawLeaves,width-50,360,30,30);
         controlP5.addToggle("drawOverlay",drawOverlay,width-50,410,30,30);
-        controlP5.addToggle("enableFluctuation",enableFluctuation,width-50,460,30,30);
         controlP5.hide();
         //controlP5.setAutoInitialization(true);
 	setLeaves(leafCount);
         backgroundMovie = new Movie(this,"Projectie_Gluco_v03.mp4");
         backgroundMovie.noLoop();
-//        backgroundMovie.frameRate(movieFps);
+        backgroundMovie.frameRate(movieFps);
+        backgroundMovie.pause();
         network(false);
-        playIt();
 }
 void playIt() {
       backgroundMovie.play();
       movieStartedMillis = millis();
 }
 void stopIt(){
-    backgroundMovie.jump(0);
-            backgroundMovie.stop();
+    backgroundMovie.jump(0.1);
+            backgroundMovie.pause();
             setLeaves(leafCount);
 }
 void draw() {
         float now = millis();
         
         // are we at the end?
-        //  
-        if( backgroundMovie.time() > 0 && backgroundMovie.duration() > 0.0 && backgroundMovie.time() >= backgroundMovie.duration()-1 ){
+        if( abs(backgroundMovie.time() - backgroundMovie.duration()) < 0.5 ){
           println( backgroundMovie.time() + " - "+backgroundMovie.duration() );
-//        if( backgroundMovie.isPlaying() == false && backgroundMovie.isPaused() == false ) {
           stopIt();
         }
         
@@ -105,9 +101,8 @@ void draw() {
         if( drawMovie ) {
             if( now-movieStartedMillis < fadePeriod )
               tint(map(now-movieStartedMillis,0,fadePeriod,startAlpha,255));
-            //else tint(map(idleTime,0,stopThreshold,255,0));
-            
-              image(backgroundMovie,0,0,width,height);
+            backgroundMovie.read();
+            image(backgroundMovie,0,0,width,height);
         }
         
 	// draw leaves
@@ -118,8 +113,7 @@ void draw() {
               lastUpdateMillis = now;
               float[] coordinates = inputCoordinates();
               if( coordinates != null ){
-                if( backgroundMovie.time() == 0 ) 
-                  playIt();
+                backgroundMovie.play();
                 //println("force coords:"+Arrays.toString(coordinates));
                 applyForce(coordinates[0],coordinates[1],coordinates[2],coordinates[3]);
               }
@@ -297,10 +291,7 @@ void drawLeaves(boolean v){
 	drawLeaves = v;
 	println("drawLeaves set to: "+v);
 }
-void enableFluctuation(boolean v){
-	enableFluctuation = v;
-	println("enableFluctuation set to: "+v);
-}
+
 void network(boolean flag){
 	println("network set to: "+flag);
 	if( client != null ) {
@@ -325,7 +316,7 @@ void loadImages(int maxImages) {
 		PImage img = loadImage("leaves2/leaves_"+nf(c,2)+".png");
 		if( img == null )
 			break;
-                img.resize(256,256);
+                img.resize(144,0);
 		images.add(img);
 	}
 }
@@ -370,15 +361,6 @@ float[] receiveCoordinates() {
     return null;
   }
   return null;
-}
-
-// Called every time a new frame is available to read
-void movieEvent(Movie m) {
-  if( m != null )
-    m.read();
-  // some issues regarding processing 1.5.1, opengl and video seem to have been resolved by manually calling these
-  //m.loadPixels();
-  //m.updatePixels();
 }
 
 
