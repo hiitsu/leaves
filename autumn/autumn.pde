@@ -76,7 +76,7 @@ void setup() {
         backgroundMovie.noLoop();
         backgroundMovie.frameRate(movieFps);
         backgroundMovie.pause();
-        network(false);
+        network(true);
 }
 void playIt() {
       backgroundMovie.play();
@@ -343,7 +343,7 @@ float[] receiveCoordinates() {
   if( client.available() >= 19 ) {
     byte[] data = new byte[19];
     int read = client.readBytes(data);
-    //println("Read "+ read+ " bytes:"+Arrays.toString(data));
+    println("Read "+ read+ " bytes:"+data);
     ByteBuffer buffer = ByteBuffer.allocate(19);
     buffer.put(data);
     float x1 = buffer.getFloat(0);
@@ -353,7 +353,7 @@ float[] receiveCoordinates() {
     byte b1 = buffer.get(16);
     byte b2 = buffer.get(17);
     byte b3 = buffer.get(18);
-    //println("Received vector:  "+v.toString());
+    println("Received vector:  "+x1+","+y1+","+x2+","+y2);
     // lazy packet delimiter
     if( b1 == 13 && b1 == b2 && b2 == b3 )
       return new float[]{x1,y1,x2,y2};

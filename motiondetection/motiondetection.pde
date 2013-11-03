@@ -53,7 +53,7 @@ void setup() {
   .setBlur(0).setOm(1).setFade(fade).setMirror(false,false);
   
   controlP5 = new ControlP5(this);
-  controlP5.setAutoInitialization(true);
+  
 
   // controls on the left side
   controlP5.addSlider("updateIntervalMillis",5,1000,updateIntervalMillis,20,60,30,80);
@@ -106,6 +106,9 @@ void draw() {
         if( bx >= leftLimit && bx <= rightLimit &&
             by >= topLimit && by <= bottomLimit ) {
             validIndices.add(i);
+        } else {
+            fill(255,0,0);
+            text("out of tracking area",bx+10,by);
         }
     } // end validations
     popMatrix();
@@ -134,12 +137,9 @@ void draw() {
                   // distance with pythagoras
                   float ox = coordinates[0];
                   float oy = coordinates[1];
-                  float d = sqrt( pow(ox-cx,2) + pow(oy-cy,2) );
-                  
+                  float d = sqrt( pow(ox-bx,2) + pow(oy-by,2) );
                   if( d < 20 && d > 1.0 ) {
-                      //println("sending coords:");
-                      sendVector(ox,oy,cx,cy);
-                      
+                      sendVector(ox,oy,bx,by);
                   }
              }
          }
@@ -198,10 +198,11 @@ void fade(int v){
         flob.setFade(fade);
 }
 void sendVector(float x1,float y1, float x2, float y2) {
-   server.write(byta(map(x1,0,160,0,1024)));
-   server.write(byta(map(y1,0,120,0,768)));
-   server.write(byta(map(x2,0,160,0,1024)));
-   server.write(byta(map(y2,0,120,0,768)));
+   println("Sending vector:  "+x1+","+y1+","+x2+","+y2);
+   server.write(byta(map(x1,0,320,0,1024)));
+   server.write(byta(map(y1,0,240,0,768)));
+   server.write(byta(map(x2,0,320,0,1024)));
+   server.write(byta(map(y2,0,240,0,768)));
    server.write(new byte[]{13,13,13});
 }
 
