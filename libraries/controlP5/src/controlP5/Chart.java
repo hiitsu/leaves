@@ -1,7 +1,8 @@
+
 package controlP5;
 
-import java.util.ArrayList;
-
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import processing.core.PApplet;
 
 /**
@@ -12,105 +13,204 @@ import processing.core.PApplet;
  */
 public class Chart extends Controller<Chart> {
 
-	// STATUS unfinished
-	// TODO pie-chart, histogram-chart, bar chart, line chart
-	// TODO setType(int type,int allignment HORIZONTAL/VERTICAL);
-
-	/*
-	 * NOTES what is the difference in meaning between chart and graph
-	 * http://answers.yahoo.com/question/index?qid=20090101193325AA3mgMl
-	 */
-
 	public final static int LINE = 0;
-	public final static int BAR = 1;
-	public final static int HISTOGRAM = 2;
-	public final static int PIE = 3;
-	public final static int AREA = 4;
 
-	protected ArrayList<ChartDataSet> _myDataSet;
+	public final static int BAR = 1;
+
+	public final static int BAR_CENTERED = 2;
+
+	public final static int HISTOGRAM = 3;
+
+	public final static int PIE = 4;
+
+	public final static int AREA = 5;
+
+	protected final LinkedHashMap<String, ChartDataSet> _myDataSet;
 
 	protected float resolution = 1;
 
 	protected float strokeWeight = 1;
 
+	protected float _myMin = 0;
+
+	protected float _myMax = 1;
+
+
+	/**
+	 * Convenience constructor to extend Chart.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public Chart(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0, 200, 100);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
+
+
 	protected Chart(ControlP5 theControlP5, ControllerGroup<?> theParent, String theName, float theX, float theY, int theWidth, int theHeight) {
 		super(theControlP5, theParent, theName, theX, theY, theWidth, theHeight);
-		_myDataSet = new ArrayList<ChartDataSet>();
-		addDataSet();
+		setRange(0, theHeight);
+		_myDataSet = new LinkedHashMap<String, ChartDataSet>();
 	}
 
-	public ChartData addData(ChartData theItem) {
-		return addData(0, theItem);
+
+	public Chart setRange(float theMin, float theMax) {
+		_myMin = theMin;
+		_myMax = theMax;
+		return this;
 	}
 
-	public ChartData addData(int theSetIndex, ChartData theItem) {
+
+	public Chart setColors(String theSetIndex, int... theColors) {
+		getDataSet().get(theSetIndex).setColors(theColors);
+		return this;
+	}
+
+
+	public Chart addData(ChartData theItem) {
+		return addData(getFirstDataSetIndex(), theItem);
+	}
+
+
+	private String getFirstDataSetIndex() {
+		return getDataSet().keySet().iterator().next();
+	}
+
+
+	private String getLastDataSetIndex() {
+		Iterator<String> it = getDataSet().keySet().iterator();
+		String last = null;
+		while (it.hasNext()) {
+			last = it.next();
+		}
+		return last;
+	}
+
+
+	public Chart addData(String theSetIndex, ChartData theItem) {
 		getDataSet(theSetIndex).add(theItem);
-		return theItem;
+		return this;
 	}
 
-	public ChartData addData(float theValue) {
+
+	public Chart addData(float theValue) {
 		ChartData cdi = new ChartData(theValue);
-		getDataSet().add(cdi);
-		return cdi;
+		getDataSet(getFirstDataSetIndex()).add(cdi);
+		return this;
 	}
 
-	public ChartData addData(int theSetIndex, float theValue) {
+
+	public Chart addData(String theSetIndex, float theValue) {
 		ChartData cdi = new ChartData(theValue);
 		getDataSet(theSetIndex).add(cdi);
-		return cdi;
+		return this;
 	}
 
-	public ChartData addData(ChartDataSet theChartData, float theValue) {
+
+	public Chart addData(ChartDataSet theChartData, float theValue) {
 		ChartData cdi = new ChartData(theValue);
 		theChartData.add(cdi);
-		return cdi;
+		return this;
 	}
 
-	public ChartData push(float theValue) {
-		return push(0, theValue);
+
+	// array operations see syntax
+	// http://www.w3schools.com/jsref/jsref_obj_array.asp
+
+	/**
+	 * adds a new float at the beginning of the data set.
+	 */
+	public Chart unshift(float theValue) {
+		return unshift(getFirstDataSetIndex(), theValue);
 	}
 
-	public ChartData push(int theSetIndex, float theValue) {
+
+	public Chart unshift(String theSetIndex, float theValue) {
 		if (getDataSet(theSetIndex).size() > (width / resolution)) {
 			removeLast(theSetIndex);
 		}
 		return addFirst(theSetIndex, theValue);
 	}
 
-	public ChartData addFirst(float theValue) {
-		return addFirst(0, theValue);
+
+	public Chart push(float theValue) {
+		return push(getFirstDataSetIndex(), theValue);
 	}
 
-	public ChartData addFirst(int theSetIndex, float theValue) {
+
+	public Chart push(String theSetIndex, float theValue) {
+		if (getDataSet(theSetIndex).size() > (width / resolution)) {
+			removeFirst(theSetIndex);
+		}
+		return addLast(theSetIndex, theValue);
+	}
+
+
+	public Chart addFirst(float theValue) {
+		return addFirst(getFirstDataSetIndex(), theValue);
+	}
+
+
+	public Chart addFirst(String theSetIndex, float theValue) {
 		ChartData cdi = new ChartData(theValue);
 		getDataSet(theSetIndex).add(0, cdi);
-		return cdi;
-	}
-
-	public Chart removeLast() {
-		return removeLast(0);
-	}
-
-	public Chart removeLast(int theSetIndex) {
-		return removeData(getDataSet(theSetIndex).size() - 1);
-	}
-
-	public Chart removeData(ChartData theItem) {
-		removeData(0, theItem);
 		return this;
 	}
 
-	public Chart removeData(int theSetIndex, ChartData theItem) {
+
+	public Chart addLast(float theValue) {
+		return addLast(getFirstDataSetIndex(), theValue);
+	}
+
+
+	public Chart addLast(String theSetIndex, float theValue) {
+		ChartData cdi = new ChartData(theValue);
+		getDataSet(theSetIndex).add(cdi);
+		return this;
+	}
+
+
+	public Chart removeLast() {
+		return removeLast(getFirstDataSetIndex());
+	}
+
+
+	public Chart removeLast(String theSetIndex) {
+		return removeData(theSetIndex, getDataSet(theSetIndex).size() - 1);
+	}
+
+
+	public Chart removeFirst() {
+		return removeFirst(getFirstDataSetIndex());
+	}
+
+
+	public Chart removeFirst(String theSetIndex) {
+		return removeData(theSetIndex, 0);
+	}
+
+
+	public Chart removeData(ChartData theItem) {
+		removeData(getFirstDataSetIndex(), theItem);
+		return this;
+	}
+
+
+	public Chart removeData(String theSetIndex, ChartData theItem) {
 		getDataSet(theSetIndex).remove(theItem);
 		return this;
 	}
 
+
 	public Chart removeData(int theItemIndex) {
-		removeData(0, theItemIndex);
+		removeData(getFirstDataSetIndex(), theItemIndex);
 		return this;
 	}
 
-	public Chart removeData(int theSetIndex, int theItemIndex) {
+
+	public Chart removeData(String theSetIndex, int theItemIndex) {
 		if (getDataSet(theSetIndex).size() < 1) {
 			return this;
 		}
@@ -118,133 +218,157 @@ public class Chart extends Controller<Chart> {
 		return this;
 	}
 
-	public ChartData setData(int theItemIndex, ChartData theItem) {
-		getDataSet().set(theItemIndex, theItem);
-		return theItem;
-	}
 
-	public ChartData setData(int theSetItem, int theItemIndex, ChartData theItem) {
-		getDataSet(theSetItem).set(theItemIndex, theItem);
-		return theItem;
-	}
-
-	public ChartDataSet addDataSet() {
-		ChartDataSet cd = new ChartDataSet();
-		_myDataSet.add(cd);
-		return cd;
-	}
-
-	public ChartDataSet setDataSet(ChartDataSet theItems) {
-		setDataSet(0, theItems);
-		return getDataSet();
-	}
-
-	public ChartDataSet setDataSet(int theIndex, ChartDataSet theChartData) {
-		_myDataSet.set(theIndex, theChartData);
-		return theChartData;
-	}
-
-	public Chart removeDataSet(ChartDataSet theChartData) {
-		_myDataSet.remove(theChartData);
+	public Chart setData(int theItemIndex, ChartData theItem) {
+		getDataSet(getFirstDataSetIndex()).set(theItemIndex, theItem);
 		return this;
 	}
 
-	public void removeDataSet(int theIndex) {
-		_myDataSet.remove(theIndex);
+
+	public Chart setData(String theSetItem, int theItemIndex, ChartData theItem) {
+		getDataSet(theSetItem).set(theItemIndex, theItem);
+		return this;
 	}
 
-	public ChartDataSet setData(float[] theValues) {
-		setData(0, theValues);
-		return getDataSet();
+
+	public Chart addDataSet(String theName) {
+		getDataSet().put(theName, new ChartDataSet(theName));
+		return this;
 	}
 
-	public ChartDataSet setData(int theSetIndex, float[] theValues) {
-		if (_myDataSet.get(theSetIndex).size() != theValues.length) {
-			_myDataSet.get(theSetIndex).clear();
+
+	public Chart setDataSet(ChartDataSet theItems) {
+		setDataSet(getFirstDataSetIndex(), theItems);
+		return this;
+	}
+
+
+	public Chart setDataSet(String theSetIndex, ChartDataSet theChartData) {
+		getDataSet().put(theSetIndex, theChartData);
+		return this;
+	}
+
+
+	public Chart removeDataSet(String theIndex) {
+		getDataSet().remove(theIndex);
+		return this;
+	}
+
+
+	public Chart setData(float... theValues) {
+		setData(getFirstDataSetIndex(), theValues);
+		return this;
+	}
+
+
+	public Chart setData(String theSetIndex, float... theValues) {
+		if (getDataSet().get(theSetIndex).size() != theValues.length) {
+			getDataSet().get(theSetIndex).clear();
 			for (int i = 0; i < theValues.length; i++) {
-				_myDataSet.get(theSetIndex).add(new ChartData(0));
+				getDataSet().get(theSetIndex).add(new ChartData(0));
 			}
 		}
 		int n = 0;
-		resolution = (float) width / (_myDataSet.get(theSetIndex).size() - 1);
+		resolution = (float) width / (getDataSet().get(theSetIndex).size() - 1);
 		for (float f : theValues) {
-			_myDataSet.get(theSetIndex).get(n++).setValue(f);
+			getDataSet().get(theSetIndex).get(n++).setValue(f);
 		}
-		return getDataSet(theSetIndex);
+		return this;
 	}
 
-	public ChartDataSet updateData(float[] theValues) {
+
+	public Chart updateData(float... theValues) {
 		return setData(theValues);
 	}
 
-	public ChartDataSet updateData(int theSetIndex, float[] theValues) {
+
+	public Chart updateData(String theSetIndex, float... theValues) {
 		return setData(theSetIndex, theValues);
 	}
 
-	public ChartDataSet getDataSet(int theTableIndex) {
-		return _myDataSet.get(theTableIndex);
+
+	public LinkedHashMap<String, ChartDataSet> getDataSet() {
+		return _myDataSet;
 	}
 
-	public ChartDataSet getDataSet() {
-		return getDataSet(0);
-	}
 
-	public ChartData getData(int theTableIndex, int theItemIndex) {
-		return getDataSet(theTableIndex).get(theItemIndex);
-	}
-
-	public ChartData getData(int theIndex) {
+	public ChartDataSet getDataSet(String theIndex) {
 		return getDataSet().get(theIndex);
 	}
 
+
+	public float[] getValuesFrom(String theIndex) {
+		return getDataSet(theIndex).getValues();
+	}
+
+
+	public ChartData getData(String theIndex, int theItemIndex) {
+		return getDataSet(theIndex).get(theItemIndex);
+	}
+
+
 	public int size() {
-		return _myDataSet.size();
+		return getDataSet().size();
 	}
 
-	@Override
-	public void onEnter() {
+
+	@Override public void onEnter() {
 	}
 
-	@Override
-	public void onLeave() {
+
+	@Override public void onLeave() {
 	}
 
-	@Override
-	public Chart setValue(float theValue) {
+
+	@Override public Chart setValue(float theValue) {
 		// TODO Auto-generated method stub
 		return this;
 	}
 
-	public void setStrokeWeight(float theWeight) {
+
+	public Chart setStrokeWeight(float theWeight) {
 		strokeWeight = theWeight;
+		for (ChartDataSet c : getDataSet().values()) {
+			c.setStrokeWeight(theWeight);
+		}
+		return this;
 	}
+
 
 	public float getStrokeWeight() {
 		return strokeWeight;
 	}
 
-	public void setResolution(int theValue) {
+
+	/**
+	 * ?
+	 * 
+	 * @param theValue
+	 * @return
+	 */
+	public Chart setResolution(int theValue) {
 		resolution = theValue;
+		return this;
 	}
+
 
 	public int getResolution() {
 		return (int) resolution;
 	}
 
-	/**
-	 * @exclude
-	 */
-	@Override
-	@ControlP5.Invisible
-	public Chart updateDisplayMode(int theMode) {
-		return updateViewMode(theMode);
-	}
 
 	/**
 	 * @exclude
 	 */
-	@ControlP5.Invisible
-	public Chart updateViewMode(int theMode) {
+	@Override @ControlP5.Invisible public Chart updateDisplayMode(int theMode) {
+		return updateViewMode(theMode);
+	}
+
+
+	/**
+	 * @exclude
+	 */
+	@ControlP5.Invisible public Chart updateViewMode(int theMode) {
 		_myDisplayMode = theMode;
 		switch (theMode) {
 		case (DEFAULT):
@@ -263,65 +387,86 @@ public class Chart extends Controller<Chart> {
 		return this;
 	}
 
-	private class ChartViewBar implements ControllerView<Chart> {
+
+	public class ChartViewBar implements ControllerView<Chart> {
 
 		public void display(PApplet theApplet, Chart theController) {
 			theApplet.pushStyle();
 			theApplet.fill(getColor().getBackground());
 			theApplet.rect(0, 0, getWidth(), getHeight());
 			theApplet.noStroke();
-			for (int n = 0; n < size(); n++) {
-				theApplet.fill(getDataSet(n).getColor().getForeground());
-				int s = getDataSet(n).size();
+
+			Iterator<String> it = getDataSet().keySet().iterator();
+			String index = null;
+			float o = 0;
+			while (it.hasNext()) {
+				index = it.next();
+				float s = getDataSet(index).size();
 				for (int i = 0; i < s; i++) {
-					int ww = (int) ((width / s));
-					theApplet.rect(i * ww, getHeight(), ww - 1, -PApplet.max(0, PApplet.min(getHeight(), getDataSet(n).get(i).getValue())));
+					theApplet.fill(getDataSet(index).getColor(i));
+					float ww = ((width / s));
+					float hh = PApplet.map(getDataSet(index).get(i).getValue(), _myMin, _myMax, 0, getHeight());
+					theApplet.rect(o + i * ww, getHeight(), (ww / getDataSet().size()), -PApplet.min(getHeight(), PApplet.max(0, hh)));
 				}
+				o += ((width / s)) / getDataSet().size();
 			}
 			theApplet.popStyle();
 		}
 	}
 
-	private class ChartViewBarCentered implements ControllerView<Chart> {
+	public class ChartViewBarCentered implements ControllerView<Chart> {
 
 		public void display(PApplet theApplet, Chart theController) {
 			theApplet.pushStyle();
 			theApplet.fill(getColor().getBackground());
 			theApplet.rect(0, 0, getWidth(), getHeight());
 			theApplet.noStroke();
-			for (int n = 0; n < size(); n++) {
-				theApplet.fill(getDataSet(n).getColor().getForeground());
-				int s = getDataSet(n).size();
+
+			Iterator<String> it = getDataSet().keySet().iterator();
+			String index = null;
+			float o = 0;
+			int n = 4;
+			int off = (getDataSet().size() - 1) * n;
+			while (it.hasNext()) {
+				index = it.next();
+				int s = getDataSet(index).size();
 				float step = (float) width / (float) (s);
-				float steps = 0;
 				float ww = step - (width % step);
 				ww -= 1;
 				ww = PApplet.max(1, ww);
+
 				for (int i = 0; i < s; i++) {
-					// theApplet.rect(steps,getHeight(),ww,-PApplet.max(0, PApplet.min(getHeight(),
-					// getDataSet(n).get(i).getValue())));
-					// steps += step;
+					theApplet.fill(getDataSet(index).getColor(i));
 					ww = ((width / s) * 0.5f);
-					theApplet.rect(i * ((width / s)) + ww / 2, getHeight(), ww, -PApplet.max(0, PApplet.min(getHeight(), getDataSet(n).get(i).getValue())));
+					float hh = PApplet.map(getDataSet(index).get(i).getValue(), _myMin, _myMax, 0, getHeight());
+					theApplet.rect(-off / 2 + o + i * ((width / s)) + ww / 2, getHeight(), ww, -PApplet.min(getHeight(), PApplet.max(0, hh)));
 				}
+				o += n;
 			}
 			theApplet.popStyle();
 		}
 	}
 
-	private class ChartViewLine implements ControllerView<Chart> {
+	public class ChartViewLine implements ControllerView<Chart> {
+
 		public void display(PApplet theApplet, Chart theController) {
 
 			theApplet.pushStyle();
 			theApplet.fill(getColor().getBackground());
 			theApplet.rect(0, 0, getWidth(), getHeight());
+			theApplet.noFill();
+			Iterator<String> it = getDataSet().keySet().iterator();
+			String index = null;
+			while (it.hasNext()) {
+				index = it.next();
+				theApplet.stroke(getDataSet(index).getColor(0));
+				theApplet.strokeWeight(getDataSet(index).getStrokeWeight());
 
-			for (int n = 0; n < size(); n++) {
-				theApplet.stroke(getDataSet(n).getColor().getForeground());
-				theApplet.strokeWeight(getDataSet(n).getStrokeWeight());
 				theApplet.beginShape();
-				for (int i = 0; i < getDataSet(n).size(); i++) {
-					theApplet.vertex(i * resolution, PApplet.max(0, PApplet.min(getHeight(), getHeight() - getDataSet(n).get(i).getValue())));
+				float res = ((float) getWidth()) / (getDataSet(index).size() - 1);
+				for (int i = 0; i < getDataSet(index).size(); i++) {
+					float hh = PApplet.map(getDataSet(index).get(i).getValue(), _myMin, _myMax, getHeight(), 0);
+					theApplet.vertex(i * res, PApplet.min(getHeight(), PApplet.max(0, hh)));
 				}
 				theApplet.endShape();
 			}
@@ -330,43 +475,111 @@ public class Chart extends Controller<Chart> {
 		}
 	}
 
-	private class ChartViewPie implements ControllerView<Chart> {
+	public class ChartViewArea implements ControllerView<Chart> {
+
+		public void display(PApplet theApplet, Chart theController) {
+
+			theApplet.pushStyle();
+			theApplet.fill(getColor().getBackground());
+			theApplet.rect(0, 0, getWidth(), getHeight());
+			theApplet.noStroke();
+
+			Iterator<String> it = getDataSet().keySet().iterator();
+			String index = null;
+			while (it.hasNext()) {
+				index = it.next();
+				float res = ((float) getWidth()) / (getDataSet(index).size() - 1);
+
+				theApplet.fill(getDataSet(index).getColor(0));
+				theApplet.beginShape();
+				theApplet.vertex(0, getHeight());
+
+				for (int i = 0; i < getDataSet(index).size(); i++) {
+					float hh = PApplet.map(getDataSet(index).get(i).getValue(), _myMin, _myMax, getHeight(), 0);
+					theApplet.vertex(i * res, PApplet.min(getHeight(), PApplet.max(0, hh)));
+				}
+				theApplet.vertex(getWidth(), getHeight());
+				theApplet.endShape(PApplet.CLOSE);
+			}
+			theApplet.noStroke();
+			theApplet.popStyle();
+		}
+	}
+
+	public class ChartViewPie implements ControllerView<Chart> {
+
 		public void display(PApplet theApplet, Chart theController) {
 			theApplet.pushStyle();
 			theApplet.pushMatrix();
-			int from = theApplet.color(255,0, 0);
-			int to = theApplet.color(255, 255,0);
-			
-			for (int n = 0; n < size(); n++) {
+
+			Iterator<String> it = getDataSet().keySet().iterator();
+			String index = null;
+			while (it.hasNext()) {
+				index = it.next();
 				float total = 0;
-				for (int i = 0; i < getDataSet(n).size(); i++) {
-					total += getDataSet(n).get(i).getValue();
+				for (int i = 0; i < getDataSet(index).size(); i++) {
+					total += getDataSet(index).get(i).getValue();
 				}
 
 				float segment = TWO_PI / total;
-				float angle = 0;
-				theApplet.translate(0, n * (getWidth() + 10));
-				for (int i = 0; i < getDataSet(n).size(); i++) {
-					int c = theApplet.lerpColor(from, to, i/(float)getDataSet(n).size());
-					theApplet.fill(c);
-					float nextAngle = angle + getDataSet(n).get(i).getValue() * segment;
-					theApplet.arc(0, 0, getWidth(), getHeight(), angle - 0.1f, nextAngle);
+				float angle = -HALF_PI;
+
+				theApplet.noStroke();
+				for (int i = 0; i < getDataSet(index).size(); i++) {
+					theApplet.fill(getDataSet(index).getColor(i));
+					float nextAngle = angle + getDataSet(index).get(i).getValue() * segment;
+
+					// a tiny offset to even out render artifacts when in smooth() mode.
+					float a = PApplet.max(0, PApplet.map(getWidth(), 0, 200, 0.05f, 0.01f));
+
+					theApplet.arc(0, 0, getWidth(), getHeight(), angle - a, nextAngle);
 					angle = nextAngle;
 				}
+				theApplet.translate(0, (getHeight() + 10));
 			}
 			theApplet.popMatrix();
 			theApplet.popStyle();
 		}
 	}
 
-	@Override
-	public String getInfo() {
+
+	public Chart setView(int theType) {
+		switch (theType) {
+		case (PIE):
+			setView(new ChartViewPie());
+			break;
+		case (LINE):
+			setView(new ChartViewLine());
+			break;
+		case (BAR):
+			setView(new ChartViewBar());
+			break;
+		case (BAR_CENTERED):
+			setView(new ChartViewBarCentered());
+			break;
+		case (AREA):
+			setView(new ChartViewArea());
+			break;
+		default:
+			System.out.println("Sorry, this ChartView does not exist");
+			break;
+		}
+		return this;
+	}
+
+
+	@Override public String getInfo() {
 		return "type:\tChart\n" + super.toString();
 	}
 
-	@Override
-	public String toString() {
+
+	@Override public String toString() {
 		return super.toString() + " [ " + getValue() + " ]" + " Chart " + "(" + this.getClass().getSuperclass() + ")";
 	}
 
 }
+
+/*
+ * NOTES what is the difference in meaning between chart and graph
+ * http://answers.yahoo.com/question/index?qid=20090101193325AA3mgMl
+ */

@@ -47,7 +47,7 @@ void setup() {
   // when creating a PFont:
   
   PFont pfont = createFont("Arial",20,true); // use true/false for smooth/no-smooth
-  ControlFont font = new ControlFont(pfont);
+  ControlFont font = new ControlFont(pfont,241);
  
   
 
@@ -56,16 +56,18 @@ void setup() {
   // for both buttons create earlier.
   cp5.getController("button")
      .getCaptionLabel()
-     .setControlFont(font)
+     .setFont(font)
      .toUpperCase(false)
-     .setControlFontSize(10);
+     .setSize(24)
+     ;
      
   b.captionLabel()
-   .setControlFont(font)
-   .setControlFontSize(80)
+   .setFont(font)
+   .setSize(50)
    .toUpperCase(false)
-   .setText("hello");
-  
+   .setText("hello")
+   ;
+//  
   // (4)
   // adjust the location of a catiption label using the 
   // style property of a controller.

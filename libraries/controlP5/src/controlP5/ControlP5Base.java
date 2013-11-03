@@ -20,30 +20,31 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import processing.core.PApplet;
 import processing.core.PVector;
+import processing.event.Event;
 
 /**
- * The ControlP5Base supports the ControlP5 class and implements all adder methods to add
- * controllers to controlP5.
+ * The ControlP5Base supports the ControlP5 class and implements all adder methods to add controllers to controlP5.
  */
 public class ControlP5Base implements ControlP5Constants {
 
-	
 	private ControlP5 cp5;
 
 	ControllerProperties _myProperties;
@@ -53,6 +54,18 @@ public class ControlP5Base implements ControlP5Constants {
 	protected Map<Object, ArrayList<ControllerInterface<?>>> _myObjectToControllerMap = new HashMap<Object, ArrayList<ControllerInterface<?>>>();
 
 	protected Map<String, FieldChangedListener> _myFieldChangedListenerMap = new HashMap<String, FieldChangedListener>();
+
+	protected Map<KeyCode, List<ControlKey>> keymap = new HashMap<KeyCode, List<ControlKey>>();
+
+	protected ControllerGroup<?> currentGroupPointer;
+
+	protected boolean isCurrentGroupPointerClosed = true;
+
+	protected int autoDirection = HORIZONTAL;
+
+	public Tab getDefaultTab() {
+		return (Tab) cp5.controlWindow.getTabs().get(1);
+	}
 
 	protected void init(ControlP5 theControlP5) {
 		cp5 = theControlP5;
@@ -66,21 +79,13 @@ public class ControlP5Base implements ControlP5Constants {
 	}
 
 	public Tab addTab(String theName) {
-		return addTab(cp5.controlWindow, theName);
-	}
-
-	public Tab addTab(PApplet theWindow, String theName) {
-		return addTab(cp5.controlWindow, theName);
-	}
-
-	public Tab addTab(ControlWindow theWindow, String theName) {
-		for (int i = 0; i < theWindow.getTabs().size(); i++) {
-			if (theWindow.getTabs().get(i).getName().equals(theName)) {
-				return (Tab) theWindow.getTabs().get(i);
+		for (int i = 0; i < cp5.getWindow().getTabs().size(); i++) {
+			if (cp5.getWindow().getTabs().get(i).getName().equals(theName)) {
+				return (Tab) cp5.getWindow().getTabs().get(i);
 			}
 		}
-		Tab myTab = new Tab(cp5, theWindow, theName);
-		theWindow.getTabs().add(myTab);
+		Tab myTab = new Tab(cp5, cp5.getWindow(), theName);
+		cp5.getWindow().getTabs().add(myTab);
 		return myTab;
 	}
 
@@ -92,8 +97,8 @@ public class ControlP5Base implements ControlP5Constants {
 		return myController;
 	}
 
-	public Button addButton(final String theName, final float theValue, final int theX, final int theY, final int theW, final int theH) {
-		return addButton(null, "", theName, theValue, theX, theY, theW, theH);
+	public Bang addBang(final String theName) {
+		return addBang(null, "", theName);
 	}
 
 	public Bang addBang(final Object theObject, String theIndex, final String theName, final int theX, final int theY, final int theWidth, final int theHeight) {
@@ -104,18 +109,6 @@ public class ControlP5Base implements ControlP5Constants {
 		return myController;
 	}
 
-	public Bang addBang(final String theName, final int theX, final int theY) {
-		return addBang(null, "", theName, theX, theY, 20, 20);
-	}
-
-	public Bang addBang(final String theName) {
-		return addBang(null, "", theName);
-	}
-
-	public Bang addBang(final String theName, final int theX, final int theY, final int theWidth, final int theHeight) {
-		return addBang(null, "", theName, theX, theY, theWidth, theHeight);
-	}
-
 	public Toggle addToggle(final Object theObject, String theIndex, final String theName, final boolean theDefaultValue, final float theX, final float theY, final int theWidth, final int theHeight) {
 		Toggle myController = new Toggle(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, (theDefaultValue == true) ? 1f : 0f, theX, theY, theWidth, theHeight);
 		cp5.register(theObject, theIndex, myController);
@@ -123,28 +116,16 @@ public class ControlP5Base implements ControlP5Constants {
 		return myController;
 	}
 
-	public Toggle addToggle(final String theName, final boolean theDefaultValue, final float theX, final float theY, final int theWidth, final int theHeight) {
-		return addToggle(null, "", theName, theDefaultValue, theX, theY, theWidth, theHeight);
-	}
-
-	public Toggle addToggle(final String theName, final float theX, final float theY, final int theWidth, final int theHeight) {
-		return addToggle(null, "", theName, false, theX, theY, theWidth, theHeight);
-	}
-
-	public Toggle addToggle(final Object theObject, final String theIndex, final String theName, final float theX, final float theY, final int theWidth, final int theHeight) {
-		return addToggle(theObject, theIndex, theName, false, theX, theY, theWidth, theHeight);
-	}
-
 	public Tooltip addTooltip() {
 		return null;
 	}
 
 	/**
-	 * Matrix is a 2-D matrix controller using toggle controllers in a rows and a columns setup.
-	 * useful for software drum machines.
+	 * Matrix is a 2-D matrix controller using toggle controllers in a rows and a columns setup. useful for software drum machines.
 	 */
-	
-	public Matrix addMatrix(final Object theObject, final String theIndex, final String theName, final int theCellX, final int theCellY, final int theX, final int theY, final int theWidth, final int theHeight) {
+
+	public Matrix addMatrix(final Object theObject, final String theIndex, final String theName, final int theCellX, final int theCellY, final int theX, final int theY, final int theWidth,
+			final int theHeight) {
 		Matrix myController = new Matrix(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, theCellX, theCellY, theX, theY, theWidth, theHeight);
 		cp5.register(theObject, theIndex, myController);
 		myController.registerProperty("cells").registerProperty("interval");
@@ -154,20 +135,20 @@ public class ControlP5Base implements ControlP5Constants {
 	public Matrix addMatrix(final String theName) {
 		return addMatrix(theName, 10, 10, 0, 0, 100, 100);
 	}
-	
+
 	public Matrix addMatrix(final String theName, final int theCellX, final int theCellY, final int theX, final int theY, final int theWidth, final int theHeight) {
 		return addMatrix(null, "", theName, theCellX, theCellY, theX, theY, theWidth, theHeight);
 	}
 
 	public Slider2D addSlider2D(final String theName) {
-		return addSlider2D(theName, 0, 0, 99, 99);
+		return addSlider2D(null, "", theName, 0, 99, 0, 99, 0, 0, 0, 0, 99, 99);
 	}
 
 	/**
-	 * Adds a 2D slider to controlP5. A 2D slider is a 2D area with 1 cursor returning its xy
-	 * coordinates.
+	 * Adds a 2D slider to controlP5. A 2D slider is a 2D area with 1 cursor returning its xy coordinates.
 	 */
-	public Slider2D addSlider2D(Object theObject, final String theIndex, final String theName, float theMinX, float theMaxX, float theMinY, float theMaxY, float theDefaultValueX, float theDefaultValueY, int theX, int theY, int theW, int theH) {
+	public Slider2D addSlider2D(Object theObject, final String theIndex, final String theName, float theMinX, float theMaxX, float theMinY, float theMaxY, float theDefaultValueX,
+			float theDefaultValueY, int theX, int theY, int theW, int theH) {
 		Slider2D myController = new Slider2D(cp5, (ControllerGroup<?>) cp5.controlWindow.getTabs().get(1), theName, theX, theY, theW, theH);
 		cp5.register(theObject, theIndex, myController);
 		myController.setMinX(theMinX);
@@ -180,24 +161,10 @@ public class ControlP5Base implements ControlP5Constants {
 		return myController;
 	}
 
-	public Slider2D addSlider2D(String theName, int theX, int theY, int theW, int theH) {
-		return addSlider2D(null, "", theName, 0, theW, 0, theH, 0, 0, theX, theY, theW, theH);
-	}
-
-	public Slider2D addSlider2D(Object theObject, final String theIndex, final String theName, int theX, int theY, int theW, int theH) {
-		return addSlider2D(theObject, theIndex, theName, 0, theW, 0, theH, 0, 0, theX, theY, theW, theH);
-	}
-
-	public Slider2D addSlider2D(String theName, float theMinX, float theMaxX, float theMinY, float theMaxY, float theDefaultValueX, float theDefaultValueY, int theX, int theY, int theW, int theH) {
-		return addSlider2D(null, "", theName, theMinX, theMaxX, theMinY, theMaxY, theDefaultValueX, theDefaultValueY, theX, theY, theW, theH);
-	}
-
 	/**
-	 * Adds a slider to controlP5. by default it will be added to the default tab of the main
-	 * window. Sliders can be arranged vertically and horizontally depending on their width and
-	 * height. The look of a sliders control can either be a bar or a handle. you can add tickmarks
-	 * to a slider or use the default free-control setting. A slider can be controller by mouse
-	 * click, drag or mouse-wheel.
+	 * Adds a slider to controlP5. by default it will be added to the default tab of the main window. Sliders can be arranged vertically and
+	 * horizontally depending on their width and height. The look of a sliders control can either be a bar or a handle. you can add
+	 * tickmarks to a slider or use the default free-control setting. A slider can be controller by mouse click, drag or mouse-wheel.
 	 */
 	public Slider addSlider(Object theObject, final String theIndex, final String theName, float theMin, float theMax, float theDefaultValue, int theX, int theY, int theW, int theH) {
 		Slider myController = new Slider(cp5, (ControllerGroup<?>) cp5.controlWindow.getTabs().get(1), theName, theMin, theMax, theDefaultValue, theX, theY, theW, theH);
@@ -225,9 +192,9 @@ public class ControlP5Base implements ControlP5Constants {
 	/**
 	 * A range controller, a slider that allows control on both ends of the slider.
 	 */
-	public Range addRange(Object theObject, final String theIndex, String theName, float theMin, float theMax, float theDefaultMinValue, float theDefaultMaxValue, int theX, int theY, int theW, int theH) {
-		Range myController = new Range(cp5, (ControllerGroup<?>) cp5.controlWindow.getTabs().get(1), theName, theMin, theMax, theDefaultMinValue, theDefaultMaxValue, theX, theY,
-				theW, theH);
+	public Range addRange(Object theObject, final String theIndex, String theName, float theMin, float theMax, float theDefaultMinValue, float theDefaultMaxValue, int theX, int theY, int theW,
+			int theH) {
+		Range myController = new Range(cp5, (ControllerGroup<?>) cp5.controlWindow.getTabs().get(1), theName, theMin, theMax, theDefaultMinValue, theDefaultMaxValue, theX, theY, theW, theH);
 		cp5.register(theObject, theIndex, myController);
 		myController.registerProperty("lowValue").registerProperty("highValue");
 		return myController;
@@ -241,11 +208,13 @@ public class ControlP5Base implements ControlP5Constants {
 		return addRange(null, "", theName, theMin, theMax, theMin, theMax, theX, theY, theWidth, theHeight);
 	}
 
-	public Range addRange(final Object theObject, final String theIndex, final String theName, final float theMin, final float theMax, final int theX, final int theY, final int theWidth, final int theHeight) {
+	public Range addRange(final Object theObject, final String theIndex, final String theName, final float theMin, final float theMax, final int theX, final int theY, final int theWidth,
+			final int theHeight) {
 		return addRange(theObject, theIndex, theName, theMin, theMax, theMin, theMax, theX, theY, theWidth, theHeight);
 	}
 
-	public Numberbox addNumberbox(final Object theObject, final String theIndex, final String theName, final float theDefaultValue, final int theX, final int theY, final int theWidth, final int theHeight) {
+	public Numberbox addNumberbox(final Object theObject, final String theIndex, final String theName, final float theDefaultValue, final int theX, final int theY, final int theWidth,
+			final int theHeight) {
 		Numberbox myController = new Numberbox(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, theDefaultValue, theX, theY, theWidth, theHeight);
 		cp5.register(theObject, theIndex, myController);
 		myController.registerProperty("value");
@@ -265,12 +234,12 @@ public class ControlP5Base implements ControlP5Constants {
 	}
 
 	/**
-	 * Knobs can use limited and endless revolutions, custom angles and starting points. There are 2
-	 * control areas for a knob, an area closer to the edge allows 'click-and-adjust' control, a
-	 * click and drag action at the inside allows to gradually change the value of a know when
-	 * dragged. A knob can be controller by mouse click, drag or mouse-wheel.
+	 * Knobs can use limited and endless revolutions, custom angles and starting points. There are 2 control areas for a knob, an area
+	 * closer to the edge allows 'click-and-adjust' control, a click and drag action at the inside allows to gradually change the value of a
+	 * know when dragged. A knob can be controller by mouse click, drag or mouse-wheel.
 	 */
-	public Knob addKnob(final Object theObject, final String theIndex, final String theName, final float theMin, final float theMax, final float theDefaultValue, final int theX, final int theY, final int theDiameter) {
+	public Knob addKnob(final Object theObject, final String theIndex, final String theName, final float theMin, final float theMax, final float theDefaultValue, final int theX, final int theY,
+			final int theDiameter) {
 		Knob myController = new Knob(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, theMin, theMax, theDefaultValue, theX, theY, theDiameter);
 		cp5.register(theObject, theIndex, myController);
 		myController.registerProperty("value");
@@ -303,11 +272,10 @@ public class ControlP5Base implements ControlP5Constants {
 		return addMultiList(null, "", theName, theX, theY, theWidth, theHeight);
 	}
 
-	
 	public Textlabel addTextlabel(final String theName) {
-		return addTextlabel(theName,"",0,0);
+		return addTextlabel(theName, "", 0, 0);
 	}
-	
+
 	public Textlabel addTextlabel(final Object theObject, final String theIndex, final String theName, final String theText, final int theX, final int theY) {
 		Textlabel myController = new Textlabel(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, theText, theX, theY);
 		cp5.register(theObject, theIndex, myController);
@@ -326,15 +294,14 @@ public class ControlP5Base implements ControlP5Constants {
 	public Textlabel addTextlabel(final String theName, final String theText) {
 		return addTextlabel(null, "", theName, theText, 0, 0);
 	}
-	
-	
+
 	public Textarea addTextarea(final String theName) {
-		return addTextarea(theName, "", 0,0,199,99);
+		return addTextarea(theName, "", 0, 0, 199, 99);
 	}
+
 	/**
-	 * A Textarea is a label without any controller functionality and can be used to leave notes,
-	 * headlines, etc when extending the dedicated area of the Textrea, a scrollbar is added on the
-	 * right.
+	 * A Textarea is a label without any controller functionality and can be used to leave notes, headlines, etc when extending the
+	 * dedicated area of the Textrea, a scrollbar is added on the right.
 	 */
 	public Textarea addTextarea(final String theName, final String theText, final int theX, final int theY, final int theW, final int theH) {
 		Textarea myController = new Textarea(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, theText, theX, theY, theW, theH);
@@ -348,12 +315,13 @@ public class ControlP5Base implements ControlP5Constants {
 	}
 
 	/**
-	 * A Textfield allows single line text input. If text goes beyond the edges of a Textfield box,
-	 * the text will automatically scroll. Use Arrow keys to navigate back and forth.
+	 * A Textfield allows single line text input. If text goes beyond the edges of a Textfield box, the text will automatically scroll. Use
+	 * Arrow keys to navigate back and forth.
 	 */
 	public Textfield addTextfield(final Object theObject, final String theIndex, final String theName, final int theX, final int theY, final int theW, final int theH) {
 		Textfield myController = new Textfield(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, "", theX, theY, theW, theH);
 		cp5.register(theObject, theIndex, myController);
+		myController.registerProperty("text");
 		return myController;
 	}
 
@@ -393,8 +361,7 @@ public class ControlP5Base implements ControlP5Constants {
 		myController.registerProperty("arrayValue");
 		return myController;
 	}
-	
-	
+
 	/**
 	 * Use radio buttons for multiple choice options.
 	 */
@@ -409,8 +376,6 @@ public class ControlP5Base implements ControlP5Constants {
 		return myController;
 	}
 
-	
-	
 	// TODO
 	// addRadioButton theObject
 
@@ -436,9 +401,8 @@ public class ControlP5Base implements ControlP5Constants {
 	}
 
 	/**
-	 * A list box is a list of items a user can choose from. When items exceed the dedicated area of
-	 * a list box, a scrollbar is added to the right of the box. the Box can be navigated using
-	 * mouse click, drag and the mouse-wheel.
+	 * A list box is a list of items a user can choose from. When items exceed the dedicated area of a list box, a scrollbar is added to the
+	 * right of the box. the Box can be navigated using mouse click, drag and the mouse-wheel.
 	 */
 	public ListBox addListBox(final String theName, final int theX, final int theY, final int theW, final int theH) {
 		ListBox myController = new ListBox(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, theX, theY, theW, theH);
@@ -465,9 +429,9 @@ public class ControlP5Base implements ControlP5Constants {
 	// addDropdownList theObject
 
 	public ColorPicker addColorPicker(final String theName) {
-		return addColorPicker(theName, 0,0, 255, 20);
+		return addColorPicker(theName, 0, 0, 255, 10);
 	}
-			
+
 	/**
 	 * adds a simple RGBA colorpicker.
 	 */
@@ -475,6 +439,16 @@ public class ControlP5Base implements ControlP5Constants {
 		ColorPicker myController = new ColorPicker(cp5, (Tab) cp5.controlWindow.getTabs().get(1), theName, theX, theY, theW, theH);
 		cp5.register(null, "", myController);
 		myController.registerProperty("arrayValue");
+		return myController;
+	}
+
+	public Println addConsole(Textarea theTextarea) {
+		return new Println(theTextarea);
+	}
+
+	public FrameRate addFrameRate() {
+		FrameRate myController = new FrameRate(cp5, (Tab) cp5.controlWindow.getTabs().get(1), "-", 0, 4);
+		cp5.register(null, "", myController);
 		return myController;
 	}
 
@@ -495,8 +469,7 @@ public class ControlP5Base implements ControlP5Constants {
 	}
 
 	/**
-	 * A controller group can be used to group controllers for a better organization of single
-	 * controllers.
+	 * A controller group can be used to group controllers for a better organization of single controllers.
 	 */
 	public Group addGroup(Object theObject, final String theIndex, String theName, int theX, int theY, int theW) {
 		Group myController = new Group(cp5, (ControllerGroup<?>) cp5.controlWindow.getTabs().get(1), theName, theX, theY, theW, 9);
@@ -516,35 +489,6 @@ public class ControlP5Base implements ControlP5Constants {
 		return addGroup(null, "", theName, theX, theY, 99);
 	}
 
-	/**
-	 * create an additional ControlWindow in a separate window frame.
-	 */
-	public ControlWindow addControlWindow(final String theWindowName, final int theX, final int theY, final int theWidth, final int theHeight, String theRenderer, int theFrameRate) {
-		for (int i = 0; i < cp5.controlWindowList.size(); i++) {
-			if (((ControlWindow) cp5.controlWindowList.get(i)).name().equals(theWindowName)) {
-				ControlP5.logger().warning("ControlWindow with name " + theWindowName + " already exists. overwriting now.");
-			}
-		}
-		PAppletWindow myPAppletWindow = new PAppletWindow(cp5, theWindowName, theX, theY, theWidth, theHeight, theRenderer, theFrameRate);
-		myPAppletWindow.setParent(cp5);
-		myPAppletWindow.setMode(PAppletWindow.ECONOMIC);
-		ControlWindow myControlWindow = new ControlWindow(cp5, myPAppletWindow);
-		cp5.controlWindowList.add(myControlWindow);
-		return myControlWindow;
-	}
-
-	public ControlWindow addControlWindow(final String theWindowName, final int theWidth, final int theHeight) {
-		return addControlWindow(theWindowName, 100, 100, theWidth, theHeight, "", 30);
-	}
-
-	public ControlWindow addControlWindow(final String theWindowName, final int theX, final int theY, final int theWidth, final int theHeight) {
-		return addControlWindow(theWindowName, theX, theY, theWidth, theHeight, "", 30);
-	}
-
-	public ControlWindow addControlWindow(final String theWindowName, final int theX, final int theY, final int theWidth, final int theHeight, final int theFrameRate) {
-		return addControlWindow(theWindowName, theX, theY, theWidth, theHeight, "", theFrameRate);
-	}
-
 	public Textlabel getTextlabel(String theText, int theX, int theY) {
 		return new Textlabel(cp5, theText, theX, theY);
 	}
@@ -552,12 +496,6 @@ public class ControlP5Base implements ControlP5Constants {
 	public Textlabel getTextlabel() {
 		return getTextlabel("", 0, 0);
 	}
-
-	protected ControllerGroup<?> currentGroupPointer;
-
-	protected boolean isCurrentGroupPointerClosed = true;
-
-	protected int autoDirection = HORIZONTAL;
 
 	protected void setCurrentPointer(ControllerGroup<?> theGroup) {
 		currentGroupPointer = theGroup;
@@ -602,8 +540,7 @@ public class ControlP5Base implements ControlP5Constants {
 		Controller.autoSpacing.z = theZ;
 	}
 
-	@SuppressWarnings("static-access")
-	protected void linebreak(Controller<?> theController, boolean theFlag, int theW, int theH, PVector theSpacing) {
+	@SuppressWarnings("static-access") protected void linebreak(Controller<?> theController, boolean theFlag, int theW, int theH, PVector theSpacing) {
 		if (currentGroupPointer.autoPosition.x + theController.autoSpacing.x + theW > cp5.papplet.width) {
 			currentGroupPointer.autoPosition.y += currentGroupPointer.tempAutoPositionHeight;
 			currentGroupPointer.autoPosition.x = currentGroupPointer.autoPositionOffsetX;
@@ -629,8 +566,7 @@ public class ControlP5Base implements ControlP5Constants {
 	}
 
 	/**
-	 * Adds a default slider with a default width of 100 and height of 10. the default value range
-	 * is from 0-100.
+	 * Adds a default slider with a default width of 100 and height of 10. the default value range is from 0-100.
 	 */
 	public Slider addSlider(String theName) {
 		return addSlider(theName, 0, 100);
@@ -650,14 +586,15 @@ public class ControlP5Base implements ControlP5Constants {
 		Slider s = addSlider(theObject, theIndex, theName, theMin, theMax, theMin, x, y, Slider.autoWidth, Slider.autoHeight);
 		linebreak(s, false, Slider.autoWidth, Slider.autoHeight, Slider.autoSpacing);
 		s.moveTo(currentGroupPointer);
-		if (autoDirection == VERTICAL)
+		if (autoDirection == VERTICAL) {
 			s.linebreak();
+		}
 		return s;
 	}
 
 	/**
-	 * Adds a default Button, the default value is 1, width and height are set to the default values
-	 * of Button.autoWidth and Button.autoHeight
+	 * Adds a default Button, the default value is 1, width and height are set to the default values of Button.autoWidth and
+	 * Button.autoHeight
 	 */
 	public Button addButton(String theName) {
 		return addButton(null, "", theName, 1);
@@ -690,8 +627,8 @@ public class ControlP5Base implements ControlP5Constants {
 	}
 
 	/**
-	 * Adds a default Toggle, the default value is false, width and height are set to the default
-	 * values of Toggle.autoWidth and Toggle.autoHeight
+	 * Adds a default Toggle, the default value is false, width and height are set to the default values of Toggle.autoWidth and
+	 * Toggle.autoHeight
 	 */
 	public Toggle addToggle(String theName) {
 		return addToggle(null, "", theName);
@@ -745,14 +682,19 @@ public class ControlP5Base implements ControlP5Constants {
 		return addKnob(null, "", theName, theMin, theMax);
 	}
 
+	/**
+	 * 
+	 */
 	public ControlWindow addControlWindow(String theName) {
-		return addControlWindow(theName, 20, 20, 300, 400);
+		// TODO re-implement ControlWindow
+		ControlP5.logger().warning("ControlWindow has been disabled currently, please have a look at the changlog.txt file inside the src folder.");
+		return null;
+		// return addControlWindow(theName, 20, 20, 300, 400);
 	}
 
 	/**
-	 * Adds Controllers by Object reference, currently supports Slider, Bang, Button, Knob,
-	 * Numberbox, Toggle, Textlabel, Textfield, Range, Slider2D. For internal use rather than on
-	 * application level.
+	 * Adds Controllers by Object reference, currently supports Slider, Bang, Button, Knob, Numberbox, Toggle, Textlabel, Textfield, Range,
+	 * Slider2D. For internal use rather than on application level.
 	 */
 	public <C> C addController(final Object theObject, final String theIndex, final String theName, final Class<C> theClass, int theX, int theY) {
 		Controller<?> c = null;
@@ -787,8 +729,7 @@ public class ControlP5Base implements ControlP5Constants {
 	 * 
 	 * @exclude
 	 */
-	@ControlP5.Invisible
-	public <C> C addGroup(final Object theObject, final String theIndex, final String theName, final Class<C> theClass, int theX, int theY, int theW, int theH) {
+	@ControlP5.Invisible public <C> C addGroup(final Object theObject, final String theIndex, final String theName, final Class<C> theClass, int theX, int theY, int theW, int theH) {
 		ControlGroup<?> c = null;
 		if (theClass.equals(DropdownList.class)) {
 			c = addDropdownList(theName, theX, theY, theW, theH);
@@ -815,16 +756,20 @@ public class ControlP5Base implements ControlP5Constants {
 		return addController(null, "", theName, theClass, theX, theY);
 	}
 
+	public ControlP5Base addControllersFor(PApplet theApplet) {
+		addControllersFor("", theApplet);
+		return this;
+	}
+
 	/**
 	 * Adds controllers for a specific object using annotations.
 	 * <p>
-	 * Uses a forward slash delimited address, for exaample:
+	 * Uses a forward slash delimited address, for example:
 	 * </p>
 	 * <p>
-	 * lets say the theAddressSpace parameter is set to "hello", and the Object (second parameter)
-	 * contains an annotated field "x", addControllersFor("hello", o); will add a controller for
-	 * field x with address /hello/x This address can be used with getController("/hello/x") to
-	 * access the controller of that particular Object and field.
+	 * lets say the theAddressSpace parameter is set to "hello", and the Object (second parameter) contains an annotated field "x",
+	 * addControllersFor("hello", o); will add a controller for field x with address /hello/x This address can be used with
+	 * getController("/hello/x") to access the controller of that particular Object and field.
 	 * </p>
 	 */
 	public ControlP5Base addControllersFor(final String theAddressSpace, Object t) {
@@ -844,8 +789,7 @@ public class ControlP5Base implements ControlP5Constants {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
-	public Object getObjectForController(ControllerInterface theController) {
+	@SuppressWarnings("unchecked") public Object getObjectForController(ControllerInterface theController) {
 		for (Iterator it = _myObjectToControllerMap.entrySet().iterator(); it.hasNext();) {
 			Map.Entry entry = (Map.Entry) it.next();
 			Object key = entry.getKey();
@@ -900,8 +844,7 @@ public class ControlP5Base implements ControlP5Constants {
 		}
 		return this;
 	}
-	
-	
+
 	public ControlP5Base setColor(CColor theColor, Object theObject) {
 		if (_myObjectToControllerMap.containsKey(theObject)) {
 			ArrayList<ControllerInterface<?>> cs = _myObjectToControllerMap.get(theObject);
@@ -947,8 +890,8 @@ public class ControlP5Base implements ControlP5Constants {
 	}
 
 	/**
-	 * prints a list of public methods of requested class into the console. You can specify patterns
-	 * that will print methods found with only these particular patterns in their name.
+	 * prints a list of public methods of requested class into the console. You can specify patterns that will print methods found with only
+	 * these particular patterns in their name.
 	 * <p>
 	 * printed Format: returnType methodName(parameter type)
 	 */
@@ -1017,8 +960,7 @@ public class ControlP5Base implements ControlP5Constants {
 						if (params.length() > 0) {
 							params = params.substring(0, params.length() - 2);
 						}
-						s.add(c.getCanonicalName() + " : " + method.getReturnType().getSimpleName().replace("Object", theClass.getSimpleName()) + " " + method.getName() + "("
-								+ params + ") ");
+						s.add(c.getCanonicalName() + " : " + method.getReturnType().getSimpleName().replace("Object", theClass.getSimpleName()) + " " + method.getName() + "(" + params + ") ");
 					}
 				}
 			}
@@ -1031,11 +973,244 @@ public class ControlP5Base implements ControlP5Constants {
 		}
 		return s;
 	}
-	
-	
-	
-	public ControlP5 mapKey(ControlKey theKey,int...theChar) {
-		cp5.keyHandler.mapKey(theKey, theChar);
+
+	public int getKeyCode() {
+		return cp5.getWindow().keyCode;
+	}
+
+	public char getKey() {
+		return cp5.getWindow().key;
+	}
+
+	private char[] fromIntToChar(int... theChar) {
+		char[] n = new char[theChar.length];
+		for (int i = 0; i < n.length; i++) {
+			if (theChar[i] >= 'a' && theChar[i] <= 'z') {
+				theChar[i] -= 32;
+			}
+			n[i] = (char) theChar[i];
+		}
+		return n;
+	}
+
+	public ControlP5 removeKeyFor(ControlKey theKey, int... theChar) {
+		removeKeyFor(theKey, fromIntToChar(theChar));
 		return cp5;
 	}
+
+	public ControlP5 mapKeyFor(ControlKey theKey, Object... os) {
+		List<Integer> l = new ArrayList<Integer>();
+		for (Object o : os) {
+			if (o instanceof Integer) {
+				l.add((int) (Integer) o);
+			} else if (o instanceof Character) {
+				char c = ((Character) o);
+				if (c >= 'a' && c <= 'z') {
+					c -= 32;
+				}
+				l.add((int) c);
+			}
+		}
+
+		char[] n = new char[l.size()];
+		for (int i = 0; i < l.size(); i++) {
+			n[i] = (char) ((int) l.get(i));
+		}
+
+		KeyCode kc = new KeyCode(n);
+		if (!keymap.containsKey(kc)) {
+			keymap.put(kc, new ArrayList<ControlKey>());
+		}
+		keymap.get(kc).add(theKey);
+		cp5.enableShortcuts();
+		return cp5;
+	}
+
+	public ControlP5 removeKeyFor(ControlKey theKey, char... theChar) {
+		List<ControlKey> l = keymap.get(new KeyCode(theChar));
+		if (l != null) {
+			l.remove(theKey);
+		}
+		return cp5;
+	}
+
+	public ControlP5 removeKeysFor(char... theChar) {
+		keymap.remove(new KeyCode(theChar));
+		return cp5;
+	}
+
+	public ControlP5 removeKeysFor(int... theChar) {
+		removeKeysFor(fromIntToChar(theChar));
+		return cp5;
+	}
+
+	protected int modifiers;
+
+	public boolean isShiftDown() {
+		return (modifiers & Event.SHIFT & (cp5.isShortcuts() ? -1 : 1)) != 0;
+	}
+
+	public boolean isControlDown() {
+		return (modifiers & Event.CTRL & (cp5.isShortcuts() ? -1 : 1)) != 0;
+	}
+
+	public boolean isMetaDown() {
+		return (modifiers & Event.META & (cp5.isShortcuts() ? -1 : 1)) != 0;
+	}
+
+	public boolean isAltDown() {
+		return (modifiers & Event.ALT & (cp5.isShortcuts() ? -1 : 1)) != 0;
+	}
+
+	static class KeyCode {
+
+		final char[] chars;
+
+		KeyCode(char... theChars) {
+			chars = theChars;
+			Arrays.sort(chars);
+		}
+
+		public String toString() {
+			String s = "";
+			for (char c : chars) {
+				s += c + "(" + ((int) c) + ") ";
+			}
+			return s;
+		}
+
+		public int size() {
+			return chars.length;
+		}
+
+		public char[] getChars() {
+			return chars;
+		}
+
+		public char get(int theIndex) {
+			if (theIndex >= 0 && theIndex < size()) {
+				return chars[theIndex];
+			}
+			return 0;
+		}
+
+		public boolean equals(Object obj) {
+			if (!(obj instanceof KeyCode)) {
+				return false;
+			}
+
+			KeyCode k = (KeyCode) obj;
+
+			if (k.size() != size()) {
+				return false;
+			}
+
+			for (int i = 0; i < size(); i++) {
+				if (get(i) != k.get(i)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		boolean contains(char n) {
+			for (char c : chars) {
+				if (n == c) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public int hashCode() {
+			int hashCode = 0;
+			int n = 1;
+			for (char c : chars) {
+				hashCode += c + Math.pow(c, n++);
+			}
+			return hashCode;
+		}
+	}
+
+	@Deprecated public Tab addTab(PApplet theWindow, String theName) {
+		return addTab(cp5.controlWindow, theName);
+	}
+
+	@Deprecated public Tab addTab(ControlWindow theWindow, String theName) {
+		for (int i = 0; i < theWindow.getTabs().size(); i++) {
+			if (theWindow.getTabs().get(i).getName().equals(theName)) {
+				return (Tab) theWindow.getTabs().get(i);
+			}
+		}
+		Tab myTab = new Tab(cp5, theWindow, theName);
+		theWindow.getTabs().add(myTab);
+		return myTab;
+	}
+
+	@Deprecated public ControlWindow addControlWindow(final String theName, final int theX, final int theY, final int theWidth, final int theHeight, String theRenderer, int theFrameRate) {
+
+		// for (int i = 0; i < cp5.controlWindowList.size(); i++) {
+		// if (((ControlWindow) cp5.controlWindowList.get(i)).name().equals(theWindowName)) {
+		// ControlP5.logger().warning("ControlWindow with name " + theWindowName + " already exists. overwriting now.");
+		// }
+		// }
+		// PAppletWindow myPAppletWindow = new PAppletWindow(cp5, theWindowName, theX, theY, theWidth, theHeight, theRenderer,
+		// theFrameRate);
+		// myPAppletWindow.setParent(cp5);
+		// myPAppletWindow.setMode(PAppletWindow.ECONOMIC);
+		// ControlWindow myControlWindow = new ControlWindow(cp5, myPAppletWindow);
+		// cp5.controlWindowList.add(myControlWindow);
+		// return myControlWindow;
+		return addControlWindow(theName);
+	}
+
+	@Deprecated public ControlWindow addControlWindow(final String theWindowName, final int theWidth, final int theHeight) {
+		return addControlWindow(theWindowName, 100, 100, theWidth, theHeight, "", 30);
+	}
+
+	@Deprecated public ControlWindow addControlWindow(final String theWindowName, final int theX, final int theY, final int theWidth, final int theHeight) {
+		return addControlWindow(theWindowName, theX, theY, theWidth, theHeight, "", 30);
+	}
+
+	@Deprecated public ControlWindow addControlWindow(final String theWindowName, final int theX, final int theY, final int theWidth, final int theHeight, final int theFrameRate) {
+		return addControlWindow(theWindowName, theX, theY, theWidth, theHeight, "", theFrameRate);
+	}
+
+	@Deprecated public Slider2D addSlider2D(String theName, int theX, int theY, int theW, int theH) {
+		return addSlider2D(null, "", theName, 0, theW, 0, theH, 0, 0, theX, theY, theW, theH);
+	}
+
+	@Deprecated public Slider2D addSlider2D(Object theObject, final String theIndex, final String theName, int theX, int theY, int theW, int theH) {
+		return addSlider2D(theObject, theIndex, theName, 0, theW, 0, theH, 0, 0, theX, theY, theW, theH);
+	}
+
+	@Deprecated public Slider2D addSlider2D(String theName, float theMinX, float theMaxX, float theMinY, float theMaxY, float theDefaultValueX, float theDefaultValueY, int theX, int theY, int theW,
+			int theH) {
+		return addSlider2D(null, "", theName, theMinX, theMaxX, theMinY, theMaxY, theDefaultValueX, theDefaultValueY, theX, theY, theW, theH);
+	}
+
+	@Deprecated public Button addButton(final String theName, final float theValue, final int theX, final int theY, final int theW, final int theH) {
+		return addButton(null, "", theName, theValue, theX, theY, theW, theH);
+	}
+
+	@Deprecated public Bang addBang(final String theName, final int theX, final int theY) {
+		return addBang(null, "", theName, theX, theY, 20, 20);
+	}
+
+	@Deprecated public Bang addBang(final String theName, final int theX, final int theY, final int theWidth, final int theHeight) {
+		return addBang(null, "", theName, theX, theY, theWidth, theHeight);
+	}
+
+	@Deprecated public Toggle addToggle(final String theName, final boolean theDefaultValue, final float theX, final float theY, final int theWidth, final int theHeight) {
+		return addToggle(null, "", theName, theDefaultValue, theX, theY, theWidth, theHeight);
+	}
+
+	@Deprecated public Toggle addToggle(final String theName, final float theX, final float theY, final int theWidth, final int theHeight) {
+		return addToggle(null, "", theName, false, theX, theY, theWidth, theHeight);
+	}
+
+	@Deprecated public Toggle addToggle(final Object theObject, final String theIndex, final String theName, final float theX, final float theY, final int theWidth, final int theHeight) {
+		return addToggle(theObject, theIndex, theName, false, theX, theY, theWidth, theHeight);
+	}
+
 }

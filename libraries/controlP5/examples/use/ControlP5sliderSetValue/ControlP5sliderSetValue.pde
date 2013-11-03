@@ -1,13 +1,16 @@
 /**
-  * ControlP5 Slider.
-  *
-  * by andreas schlegel, 2009
-  */
-
+ * ControlP5 Slider set value
+ * changes the value of a slider on keyPressed
+ *
+ * by Andreas Schlegel, 2012
+ * www.sojamo.de/libraries/controlP5
+ *
+ */
+ 
 import controlP5.*;
 
 
-ControlP5 controlP5;
+ControlP5 cp5;
 
 int myColorBackground = color(0,0,0);
 
@@ -15,9 +18,23 @@ int sliderValue = 100;
 
 void setup() {
   size(400,400);
-  controlP5 = new ControlP5(this);
-  controlP5.addSlider("slider",100,200,128,100,160,100,10);
-  controlP5.addSlider("sliderValue",100,200,100,100,200,100,10);
+  noStroke();
+  cp5 = new ControlP5(this);
+
+  cp5.addSlider("sliderValue")
+     .setRange(100,200)
+     .setValue(120)
+     .setPosition(100,200)
+     .setSize(100,10)
+     ;
+
+  
+  cp5.addSlider("slider")
+     .setRange(100,200)
+     .setValue(128)
+     .setPosition(100,160)
+     .setSize(100,10);
+     
 }
 
 void draw() {
@@ -29,9 +46,9 @@ void draw() {
 void slider(int theColor) {
   myColorBackground = color(theColor);
   println("a slider event. setting background to "+theColor);
-  controlP5.controller("sliderValue").setValue(theColor);
+  cp5.getController("sliderValue").setValue(theColor);
 }
 
 void keyPressed() {
-  controlP5.controller("sliderValue").setValue(150);
+  cp5.getController("sliderValue").setValue(150);
 }

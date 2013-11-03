@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -54,8 +54,9 @@ public class ControlTimer {
 	 */
 	public String toString() {
 		update();
-		return (((h < 10) ? "0" + h : "" + h) + " : " + ((m < 10) ? "0" + m : "" + m) + " : " + ((s < 10) ? "0" + s : ""
-				+ s) // + " : " +
+		return (((h < 10) ? "0" + h : "" + h) + " : " + ((m < 10) ? "0" + m : "" + m) + " : " + ((s < 10) ? "0" + s : "" + s) // +
+																																// " : "
+																																// +
 		// ((ms<100) ? "0" + ms: "" +ms)
 		);
 	}

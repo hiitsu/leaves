@@ -23,6 +23,7 @@ void setup() {
          .setPosition(30,40)
          .setSize(100,100)
          .setArrayValue(new float[] {50, 50})
+         //.disableCrosshair()
          ;
          
   smooth();
@@ -73,7 +74,8 @@ You can find further details about class Slider2D in the javadoc.
 Format:
 ClassName : returnType methodName(parameter type)
 
-
+controlP5.Slider2D : Slider2D enableCrosshair()
+controlP5.Slider2D : Slider2D disableCrosshair()
 controlP5.Slider2D : Slider2D setArrayValue(float[]) 
 controlP5.Slider2D : Slider2D setMaxX(float) 
 controlP5.Slider2D : Slider2D setMaxY(float) 

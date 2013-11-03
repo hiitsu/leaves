@@ -1,3 +1,4 @@
+
 package controlP5;
 
 /**
@@ -20,94 +21,14 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
-import processing.core.PApplet;
 
-/**
- * Use a ControlWindowCanvas to draw custom graphics into a control window or
- * the default sketch window.
- * 
- * The ControlWindowCanvas is an abstract class and must be extended by your
- * custom ControlWindowCanvas class, see the ControlP5canvas example for
- * details.
- * 
- * @example controllers/ControlP5canvas
- * 
- */
-public abstract class ControlWindowCanvas {
+public abstract class ControlWindowCanvas extends Canvas {
 
-	protected ControlWindow _myControlWindow;
-	public final static int PRE = 0;
-	public final static int POST = 1;
-	protected int _myMode = PRE;
-
-	public void setup(PApplet theApplet) {
-	}
-
-	/**
-	 * controlWindowCanvas is an abstract class and therefore needs to be
-	 * extended by your class. draw(PApplet theApplet) is the only method that
-	 * needs to be overwritten.
-	 */
-	public abstract void draw(PApplet theApplet);
-
-	/**
-	 * move a canvas to another controlWindow
-	 * 
-	 * @param theControlWindow
-	 */
-	public void moveTo(ControlWindow theControlWindow) {
-		if (_myControlWindow != null) {
-			_myControlWindow.removeCanvas(this);
-		}
-		theControlWindow.addCanvas(this);
-	}
-
-	/**
-	 * get the drawing mode of a ControlWindowCanvas. this can be PRE or POST.
-	 * 
-	 * @return
-	 */
-	public final int mode() {
-		return _myMode;
-	}
-
-	/**
-	 * set the drawing mode to PRE. PRE is the default.
-	 */
-	public final void pre() {
-		setMode(PRE);
-	}
-
-	/**
-	 * set the drawing mode to POST.
-	 */
-	public final void post() {
-		setMode(POST);
-	}
-
-	/**
-	 * 
-	 * @param theMode
-	 */
-	public final void setMode(int theMode) {
-		if (theMode == PRE) {
-			_myMode = PRE;
-		} else {
-			_myMode = POST;
-		}
-	}
-
-	protected final void setControlWindow(ControlWindow theControlWindow) {
-		_myControlWindow = theControlWindow;
-	}
-
-	public final ControlWindow window() {
-		return _myControlWindow;
-	}
+	// Wrapper class.
 
 }

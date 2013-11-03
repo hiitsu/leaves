@@ -1,11 +1,11 @@
 package controlP5;
 
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import processing.core.PApplet;
+import processing.event.KeyEvent;
 
 /**
  * controlP5 is a processing gui library.
@@ -27,13 +27,13 @@ import processing.core.PApplet;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
 /**
- *@exmaple controllers/ControlP5dropdownList
+ * @exmaple controllers/ControlP5dropdownList
  */
 public class DropdownList extends ControlGroup<DropdownList> {
 
@@ -51,7 +51,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 
 	protected boolean isScrollbarVisible = true;
 
-	private int _myScrollbarWidth = 5;
+	private int _myScrollbarWidth = 6;
 
 	protected int _myHeight;
 
@@ -71,6 +71,18 @@ public class DropdownList extends ControlGroup<DropdownList> {
 
 	private boolean bulkadding;
 
+	/**
+	 * Convenience constructor to extend DropdownList.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public DropdownList(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0, 99, 99);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
+
 	protected DropdownList(ControlP5 theControlP5, ControllerGroup<?> theGroup, String theName, int theX, int theY, int theW, int theH) {
 		super(theControlP5, theGroup, theName, theX, theY, theW, 9);
 
@@ -85,7 +97,8 @@ public class DropdownList extends ControlGroup<DropdownList> {
 		// workaround fix see code.goode.com/p/controlp5 issue 7
 		_myBackgroundHeight = theH < 10 ? 10 : theH;
 
-		_myScrollbar = new Slider(cp5, _myParent, theName + "Scroller", 0, 1, 1, _myWidth - _myScrollbarWidth, 0, _myScrollbarWidth, _myBackgroundHeight);
+		_myScrollbar = new Slider(cp5, _myParent, theName + "Scroller", 0, 1, 1, _myWidth - _myScrollbarWidth, 0, _myScrollbarWidth,
+				_myBackgroundHeight);
 		_myScrollbar.setBroadcast(false);
 		_myScrollbar.setSliderMode(Slider.FLEXIBLE);
 		_myScrollbar.setMoveable(false);
@@ -103,13 +116,11 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@Override
-	public String getStringValue() {
+	@Override public String getStringValue() {
 		return getCaptionLabel().toString();
 	}
 
-	@Override
-	public DropdownList setValue(float theValue) {
+	@Override public DropdownList setValue(float theValue) {
 		for (ListBoxItem l : items) {
 			if ((l.value == theValue)) {
 				_myValue = l.value;
@@ -168,13 +179,11 @@ public class DropdownList extends ControlGroup<DropdownList> {
 		return this;
 	}
 
-	@ControlP5.Invisible
-	public float getScrollPosition() {
+	@ControlP5.Invisible public float getScrollPosition() {
 		return _myScrollbar.getValue();
 	}
 
-	@ControlP5.Invisible
-	public void scrolled(int theStep) {
+	@ControlP5.Invisible public void scrolled(int theStep) {
 		float step = 1.0f / items.size();
 		scroll((1 - getScrollPosition()) + (theStep * step));
 	}
@@ -199,8 +208,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 		}
 	}
 
-	@ControlP5.Invisible
-	public DropdownList updateListBoxItems() {
+	@ControlP5.Invisible public DropdownList updateListBoxItems() {
 		scroll();
 		return this;
 	}
@@ -222,8 +230,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 		return this;
 	}
 
-	@Override
-	public DropdownList setHeight(int theHeight) {
+	@Override public DropdownList setHeight(int theHeight) {
 		_myOriginalBackgroundHeight = theHeight;
 
 		// re-adjust the _myAdjustedListHeight variable based on height change.
@@ -252,15 +259,14 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@Override
-	@ControlP5.Invisible
-	public DropdownList updateInternalEvents(PApplet theApplet) {
-		boolean xx = _myControlWindow.mouseX > getAbsolutePosition().x && _myControlWindow.mouseX < getAbsolutePosition().x + _myWidth;
+	@Override @ControlP5.Invisible public DropdownList updateInternalEvents(PApplet theApplet) {
+		boolean xx = cp5.getWindow().mouseX > getAbsolutePosition().x && cp5.getWindow().mouseX < getAbsolutePosition().x + _myWidth;
 		// there is a 1px gap between bar and controllers, so -1 the top-y-position
-		boolean yy = _myControlWindow.mouseY > getAbsolutePosition().y - 1 && _myControlWindow.mouseY < getAbsolutePosition().y + _myBackgroundHeight;
+		boolean yy = cp5.getWindow().mouseY > getAbsolutePosition().y - 1
+				&& cp5.getWindow().mouseY < getAbsolutePosition().y + _myBackgroundHeight;
 		isInsideGroup = isOpen() ? xx && yy : false;
 		if ((isBarVisible ? isInside : false) || isInsideGroup) {
-			_myControlWindow.setMouseOverController(this);
+			cp5.getWindow().setMouseOverController(this);
 		}
 		return this;
 	}
@@ -301,8 +307,14 @@ public class DropdownList extends ControlGroup<DropdownList> {
 		}
 	}
 
-	@Override
-	public DropdownList setWidth(int theWidth) {
+	public DropdownList setScrollbarWidth(int theWidth) {
+		_myScrollbar.setWidth(theWidth);
+		_myScrollbarWidth = theWidth;
+		setWidth(getWidth());
+		return this;
+	}
+
+	@Override public DropdownList setWidth(int theWidth) {
 		_myWidth = theWidth;
 		updateButtonWidth();
 		_myScrollbar.position.x = _myWidth - _myScrollbarWidth;
@@ -318,7 +330,8 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	protected DropdownList addListButton(int theNum) {
 		for (int i = 0; (i < theNum) && (buttons.size() < maxButtons); i++) {
 			int index = buttons.size();
-			Button b = new Button(cp5, (ControllerGroup<?>) this, _myName + "Button" + index, index, 0, index * (_myItemHeight + spacing), _myWidth, _myItemHeight);
+			Button b = new Button(cp5, (ControllerGroup<?>) this, _myName + "Button" + index, index, 0, index * (_myItemHeight + spacing),
+					_myWidth, _myItemHeight);
 			b.setMoveable(false);
 			add(b);
 			cp5.register(null, "", b);
@@ -448,8 +461,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	public void controlEvent(ControlEvent theEvent) {
+	@ControlP5.Invisible public void controlEvent(ControlEvent theEvent) {
 		if (theEvent.getController() instanceof Button) {
 			try {
 				_myValue = theEvent.getController().getValue();
@@ -480,8 +492,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	 * 
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	public void keyEvent(final KeyEvent theEvent) {
+	@ControlP5.Invisible public void keyEvent(final KeyEvent theEvent) {
 		super.keyEvent(theEvent);
 		float x = getAbsolutePosition().x;
 		float y = getAbsolutePosition().y;
@@ -489,17 +500,17 @@ public class DropdownList extends ControlGroup<DropdownList> {
 				+ _myOriginalBackgroundHeight);
 		if (b && isOpen()) {
 			float step = (1.0f / (float) items.size());
-			if (cp5.keyHandler.isShiftDown) {
+			if (cp5.isShiftDown()) {
 				step *= 10;
-			} else if (cp5.keyHandler.isAltDown) {
+			} else if (cp5.isAltDown()) {
 				step = 1;
 			}
-			if (theEvent.getID() == KeyEvent.KEY_PRESSED) {
+			if (theEvent.getAction() == KeyEvent.PRESS) {
 				switch (theEvent.getKeyCode()) {
-				case (KeyEvent.VK_UP):
+				case (PApplet.UP):
 					_myScrollbar.setValue(PApplet.constrain(_myScrollbar.getValue() + step, 0, 1));
 					break;
-				case (KeyEvent.VK_DOWN):
+				case (PApplet.DOWN):
 					_myScrollbar.setValue(PApplet.constrain(_myScrollbar.getValue() - step, 0, 1));
 					break;
 				}
@@ -540,8 +551,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public DropdownList setColor(CColor theColor) {
+	@Override public DropdownList setColor(CColor theColor) {
 		setColorActive(theColor.getActive());
 		setColorForeground(theColor.getForeground());
 		setColorBackground(theColor.getBackground());
@@ -553,8 +563,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public DropdownList setColorActive(int theColor) {
+	@Override public DropdownList setColorActive(int theColor) {
 		super.setColorActive(theColor);
 		for (int i = 0; i < items.size(); i++) {
 			(items.get(i)).getColor().setActive(theColor);
@@ -566,8 +575,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public DropdownList setColorForeground(int theColor) {
+	@Override public DropdownList setColorForeground(int theColor) {
 		super.setColorForeground(theColor);
 		for (int i = 0; i < items.size(); i++) {
 			(items.get(i)).getColor().setForeground(theColor);
@@ -579,8 +587,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public DropdownList setColorBackground(int theColor) {
+	@Override public DropdownList setColorBackground(int theColor) {
 		super.setColorBackground(theColor);
 		for (int i = 0; i < items.size(); i++) {
 			(items.get(i)).getColor().setBackground(theColor);
@@ -592,8 +599,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public DropdownList setColorLabel(int theColor) {
+	@Override public DropdownList setColorLabel(int theColor) {
 		super.setColorLabel(theColor);
 		for (int i = 0; i < items.size(); i++) {
 			(items.get(i)).getColor().setCaptionLabel(theColor);
@@ -605,9 +611,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	@ControlP5.Invisible
-	public DropdownList setColorValue(int theColor) {
+	@Override @ControlP5.Invisible public DropdownList setColorValue(int theColor) {
 		super.setColorValue(theColor);
 		for (int i = 0; i < items.size(); i++) {
 			(items.get(i)).getColor().setValueLabel(theColor);
@@ -636,8 +640,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public ListBoxItem item(int theIndex) {
+	@Deprecated public ListBoxItem item(int theIndex) {
 		return getItem(theIndex);
 	}
 
@@ -645,8 +648,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public ListBoxItem item(String theItemName) {
+	@Deprecated public ListBoxItem item(String theItemName) {
 		return getItem(theItemName);
 	}
 
@@ -654,8 +656,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public ListBoxItem item(Controller<?> theButton) {
+	@Deprecated public ListBoxItem item(Controller<?> theButton) {
 		return getItem(theButton);
 	}
 
@@ -664,8 +665,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	 * @deprecated
 	 * @return
 	 */
-	@Deprecated
-	public boolean isScrollbarVisible() {
+	@Deprecated public boolean isScrollbarVisible() {
 		return isScrollbarVisible;
 	}
 
@@ -673,9 +673,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	 * @deprecated
 	 * @exclude {@inheritDoc}
 	 */
-	@Override
-	@Deprecated
-	public String stringValue() {
+	@Override @Deprecated public String stringValue() {
 		return captionLabel().toString();
 	}
 

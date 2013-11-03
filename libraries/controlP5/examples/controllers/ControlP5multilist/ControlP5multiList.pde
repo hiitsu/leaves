@@ -9,14 +9,14 @@ ControlP5 controlP5;
 MultiList l;
 
 void setup() {
-  size(400,400);
+  size(700,400);
   frameRate(30);
   controlP5 = new ControlP5(this);
   
   // add a multiList to controlP5.
   // elements of the list have default dimensions
   // here, a width of 100 and a height of 12
-  l = controlP5.addMultiList("myList",0,10,100,12);
+  l = controlP5.addMultiList("myList",20,20,100,12);
   
   // create a multiListButton which we will use to
   // add new buttons to the multilist

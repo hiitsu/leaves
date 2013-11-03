@@ -1,6 +1,9 @@
-/**
+  /**
 * ControlP5 Tooltip
 *
+* add a tooltip to a controller.
+* hover your mouse on top of a slider in the example and wait 
+* for 1 second for the tooltip to appear.
 *
 * find a list of public methods available for the Tooltip Controller
 * at the bottom of this sketch.

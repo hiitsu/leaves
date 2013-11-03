@@ -1,3 +1,4 @@
+
 package controlP5;
 
 /**
@@ -20,8 +21,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -35,18 +36,19 @@ import java.util.List;
  * @nosuperclasses Controller Controller
  */
 public class MultiListButton extends Button implements MultiListInterface {
-	
-	private List<MultiListButton> _myChildren = new ArrayList<MultiListButton>();
-	
-	private MultiListInterface parent;
+
+	//	private MultiListInterface parent;
+
+	private Controller parent;
 
 	private MultiList root;
 
-	private CRect _myRect;
+	private int[] _myRect = new int[4];
 
 	protected int _myDirection = ControlP5Constants.RIGHT;
-	
-	private boolean isUpperCase =true;
+
+	private boolean isUpperCase = true;
+
 
 	/**
 	 * 
@@ -54,30 +56,32 @@ public class MultiListButton extends Button implements MultiListInterface {
 	 * @param theParent MultiListInterface
 	 * @param theRoot MultiList
 	 */
-	protected MultiListButton(ControlP5 theControlP5, String theName, float theValue, int theX, int theY, int theWidth, int theHeight, MultiListInterface theParent, MultiList theRoot) {
+	protected MultiListButton(ControlP5 theControlP5, String theName, float theValue, int theX, int theY, int theWidth, int theHeight, Controller theParent, MultiList theRoot) {
 		super(theControlP5, (ControllerGroup<?>) theRoot.getParent(), theName, theValue, theX, theY, theWidth, theHeight);
 		parent = theParent;
 		root = theRoot;
 		updateRect(position.x, position.y, width, height);
-		_myCaptionLabel.align(LEFT,CENTER);
+		_myCaptionLabel.align(LEFT, CENTER);
 	}
-	
+
+
 	public MultiListButton toUpperCase(boolean theValue) {
 		isUpperCase = theValue;
-		for(MultiListButton c:_myChildren) {
-			((MultiListButton)c).toUpperCase(isUpperCase);
+		for (Controller<?> c : getSubelements()) {
+			c.getCaptionLabel().toUpperCase(isUpperCase);
 		}
 		_myCaptionLabel.toUpperCase(isUpperCase);
 		return this;
 	}
 
+
 	public void remove() {
 		int myYoffset = 0;
-		for (int i = 0; i < parent.getChildren().size(); i++) {
-			if (parent.getChildren().get(i) == this) {
+		for (int i = 0; i < parent.getSubelements().size(); i++) {
+			if (parent.getSubelements().get(i) == this) {
 				myYoffset = height + 1;
 			}
-			((MultiListButton) parent.getChildren().get(i)).updateLocation(0, -myYoffset);
+			((MultiListButton) parent.getSubelements().get(i)).updateLocation(0, -myYoffset);
 		}
 
 		if (_myParent != null) {
@@ -88,47 +92,36 @@ public class MultiListButton extends Button implements MultiListInterface {
 			removeListener(root);
 			cp5.remove(this);
 		}
-		for (int i = 0; i < _myChildren.size(); i++) {
-			((MultiListButton) _myChildren.get(i)).remove();
+		for (int i = 0; i < getSubelements().size(); i++) {
+			((MultiListButton) getSubelements().get(i)).remove();
 		}
 	}
 
-	public List<MultiListButton> getChildren() {
-		return _myChildren;
-	}
 
 	public int getDirection() {
 		return _myDirection;
 	}
 
+
 	protected void setDirection(int theDirection) {
 		_myDirection = theDirection;
 	}
 
-	/**
-	 * 
-	 * @param theX float
-	 * @param theY float
-	 * @param theW float
-	 * @param theH float
-	 */
+
 	public void updateRect(float theX, float theY, float theW, float theH) {
-		_myRect = new CRect(theX, theY, theW, theH);
+		_myRect = new int[] { (int) theX, (int) theY, (int) theW, (int) theH };
 	}
 
-	/**
-	 * 
-	 * @param theX float
-	 * @param theY float
-	 */
+
 	public void updateLocation(float theX, float theY) {
 		position.x += theX;
 		position.y += theY;
 		updateRect(position.x, position.y, width, height);
-		for (int i = 0; i < _myChildren.size(); i++) {
-			((MultiListInterface) _myChildren.get(i)).updateLocation(theX, theY);
+		for (int i = 0; i < getSubelements().size(); i++) {
+			((MultiListInterface) getSubelements().get(i)).updateLocation(theX, theY);
 		}
 	}
+
 
 	/**
 	 * set the width of a multlist button.
@@ -143,6 +136,7 @@ public class MultiListButton extends Button implements MultiListInterface {
 		return this;
 	}
 
+
 	/**
 	 * set the height of a multlist button.
 	 * 
@@ -153,15 +147,18 @@ public class MultiListButton extends Button implements MultiListInterface {
 		height = theHeight;
 		difHeight = height - difHeight;
 		int myYoffset = 0;
-		for (int i = 0; i < parent.getChildren().size(); i++) {
-			(parent.getChildren().get(i)).updateLocation(0, myYoffset);
-			if ((parent.getChildren().get(i)) == this) {
-				myYoffset = difHeight;
+		for (int i = 0; i < parent.getSubelements().size(); i++) {
+			if (parent.getSubelements().get(i) instanceof MultiListInterface) {
+				((MultiListInterface) parent.getSubelements().get(i)).updateLocation(0, myYoffset);
+				if ((parent.getSubelements().get(i)) == this) {
+					myYoffset = difHeight;
+				}
 			}
 		}
 		updateLocation(0, 0);
 		return this;
 	}
+
 
 	/**
 	 * add a new button to the sublist of this multilist button.
@@ -172,8 +169,8 @@ public class MultiListButton extends Button implements MultiListInterface {
 	 */
 	public MultiListButton add(String theName, float theValue) {
 		int myHeight = -(height + 1);
-		for (int i = 0; i < getChildren().size(); i++) {
-			myHeight += (getChildren().get(i)).height + 1;
+		for (int i = 0; i < getSubelements().size(); i++) {
+			myHeight += (getSubelements().get(i)).height + 1;
 		}
 		// negative direction, this is static now, make it dynamic depending on
 		// the
@@ -185,79 +182,74 @@ public class MultiListButton extends Button implements MultiListInterface {
 		b.hide();
 		cp5.register(null, "", b);
 		b.addListener(root);
-		_myChildren.add(b);
+		getSubelements().add(b);
 		updateRect(xx, position.y, width, (height + 1) + myHeight);
 		return b;
 	}
 
-	/**
-	 * 
-	 */
+
 	protected void onEnter() {
 		if (!root.isUpdateLocation) {
 			isActive = true;
 			root.occupied(true);
 			root.mostRecent = this;
-			parent.close(this);
+			if (parent instanceof MultiListInterface) {
+				((MultiListInterface) parent).close(this);
+			}
 			open();
 		}
 	}
 
-	/**
-	 * 
-	 */
+
 	protected void onLeave() {
-		if (!parent.observe() && !root.isUpdateLocation && root.mostRecent == this) {
-			isActive = false;
-			root.occupied(false);
+		if (parent instanceof MultiListInterface) {
+			if (!((MultiListInterface) parent).observe() && !root.isUpdateLocation && root.mostRecent == this) {
+				isActive = false;
+				root.occupied(false);
+			}
 		}
 	}
+
 
 	public void mouseReleasedOutside() {
 		// !!! other than in the Button class, calling mouseReleased here
 		// conflicts with mouseReleased();
 	}
 
-	/**
-	 * 
-	 * @param theMousePosition CVector3f
-	 * @return boolean
-	 */
+
 	public boolean observe() {
-		return CRect.inside(_myRect, _myControlWindow.mouseX, _myControlWindow.mouseY);
+		return CP.inside(_myRect, _myControlWindow.mouseX, _myControlWindow.mouseY);
 	}
 
-	/**
-	 * 
-	 * @param theInterface MultiListInterface
-	 */
+
 	public void close(MultiListInterface theInterface) {
-		for (int i = 0; i < _myChildren.size(); i++) {
-			if (theInterface != (MultiListInterface) _myChildren.get(i)) {
-				((MultiListInterface) _myChildren.get(i)).close();
+		for (int i = 0; i < getSubelements().size(); i++) {
+			if (theInterface != (MultiListInterface) getSubelements().get(i)) {
+				((MultiListInterface) getSubelements().get(i)).close();
 			}
 		}
 
 	}
 
-	/**
-	 * 
-	 */
+
 	public void close() {
-		for (int i = 0; i < _myChildren.size(); i++) {
-			((MultiListButton) _myChildren.get(i)).close();
-			((MultiListButton) _myChildren.get(i)).hide();
+		for (int i = 0; i < getSubelements().size(); i++) {
+			((MultiListButton) getSubelements().get(i)).close();
+			((MultiListButton) getSubelements().get(i)).hide();
 		}
 	}
 
-	/**
-	 * 
-	 */
+
 	public void open() {
-		for (int i = 0; i < _myChildren.size(); i++) {
-			((MultiListButton) _myChildren.get(i)).show();
+		for (int i = 0; i < getSubelements().size(); i++) {
+			((MultiListButton) getSubelements().get(i)).show();
 		}
 	}
 
+
+	@Deprecated public List<MultiListButton> getChildren() {
+		System.out.println("controlP5.MultiListButton.getChildren() is deprecated since 0.7.6, use getSubelement().\nFor convenience an empty List is returned here.");
+		return new ArrayList<MultiListButton>();
+	}
 
 }

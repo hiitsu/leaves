@@ -1,3 +1,4 @@
+
 package controlP5;
 
 /**
@@ -20,11 +21,17 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
-import java.awt.event.KeyEvent;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
+import java.net.URLEncoder;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
+
+import processing.core.PApplet;
 
 /**
  * Constant variables used with ControlP5 are stored here.
@@ -58,46 +65,46 @@ public interface ControlP5Constants {
 	public final static int STRING = 4;
 
 	public final static int ARRAY = 5;
-	
-	public final static int BITFONT = 100; 
+
+	public final static int BITFONT = 100;
 
 	public final static Class<?>[] acceptClassList = { int.class, float.class, boolean.class, String.class };
 
 	public final static Class<?> controlEventClass = ControlEvent.class;
 
-	public final static int UP = KeyEvent.VK_UP;
+	public final static int UP = PApplet.UP; // KeyEvent.VK_UP;
 
-	public final static int DOWN = KeyEvent.VK_DOWN;
+	public final static int DOWN = PApplet.DOWN; //KeyEvent.VK_DOWN;
 
-	public final static int LEFT = KeyEvent.VK_LEFT; // PApplet.LEFT
-	
-	public final static int RIGHT = KeyEvent.VK_RIGHT; // PApplet.RIGHT
+	public final static int LEFT = PApplet.LEFT; //KeyEvent.VK_LEFT;
 
-	public final static int SHIFT = KeyEvent.VK_SHIFT;
+	public final static int RIGHT = PApplet.RIGHT; //KeyEvent.VK_RIGHT;
 
-	public final static int DELETE = KeyEvent.VK_DELETE;
+	public final static int SHIFT = PApplet.SHIFT; //KeyEvent.VK_SHIFT;
 
-	public final static int BACKSPACE = KeyEvent.VK_BACK_SPACE;
+	public final static int DELETE = PApplet.DELETE; //KeyEvent.VK_DELETE;
 
-	public final static int ENTER = KeyEvent.VK_ENTER;
+	public final static int BACKSPACE = PApplet.BACKSPACE; //KeyEvent.VK_BACK_SPACE;
 
-	public final static int ESCAPE = KeyEvent.VK_ESCAPE;
+	public final static int ENTER = PApplet.ENTER; //KeyEvent.VK_ENTER;
 
-	public final static int ALT = KeyEvent.VK_ALT;
+	public final static int ESCAPE = PApplet.ESC; //KeyEvent.VK_ESCAPE;
 
-	public final static int CONTROL = KeyEvent.VK_CONTROL;
-	
-	public final static int COMMANDKEY = KeyEvent.VK_META;
+	public final static int ALT = PApplet.ALT; //KeyEvent.VK_ALT;
 
-	public final static int TAB = KeyEvent.VK_TAB;
+	public final static int CONTROL = PApplet.CONTROL;//KeyEvent.VK_CONTROL;
 
-	public final static char INCREASE = KeyEvent.VK_UP;
+	public final static int COMMANDKEY = 157; // Event.VK_META;
 
-	public final static char DECREASE = KeyEvent.VK_DOWN;
+	public final static int TAB = PApplet.TAB; //KeyEvent.VK_TAB;
 
-	public final static char SWITCH_FORE = KeyEvent.VK_LEFT;
+	public final static char INCREASE = PApplet.UP;
 
-	public final static char SWITCH_BACK = KeyEvent.VK_RIGHT;
+	public final static char DECREASE = PApplet.DOWN;
+
+	public final static char SWITCH_FORE = PApplet.LEFT;
+
+	public final static char SWITCH_BACK = PApplet.RIGHT;
 
 	public final static char SAVE = 'S';
 
@@ -115,11 +122,11 @@ public interface ControlP5Constants {
 
 	public final static int TOP = 101; // PApplet.TOP
 
-	public final static int BOTTOM = 102;  // PApplet.BOTTOM
- 
-	public final static int CENTER = 3;  // PApplet.CENTER
-	
-	public final static int BASELINE = 0;  // PApplet.BASELINE
+	public final static int BOTTOM = 102; // PApplet.BOTTOM
+
+	public final static int CENTER = 3; // PApplet.CENTER
+
+	public final static int BASELINE = 0; // PApplet.BASELINE
 
 	public static final int HORIZONTAL = 0;
 
@@ -156,7 +163,7 @@ public interface ControlP5Constants {
 	public static final int INACTIVE = 0;
 
 	public static final int WAIT = 1;
-	
+
 	public static final int TRANSITION_WAIT_FADEIN = 2;
 
 	public static final int FADEIN = 3;
@@ -184,21 +191,23 @@ public interface ControlP5Constants {
 	public static final int ACTION_RELEASEDOUTSIDE = 16;
 
 	public static final int ACTION_BROADCAST = 32;
-	
-	
-	
+
 	public static final int LEFT_OUTSIDE = 10;
-	
+
 	public static final int RIGHT_OUTSIDE = 11;
-	
+
 	public static final int TOP_OUTSIDE = 12;
-	
+
 	public static final int BOTTOM_OUTSIDE = 13;
 
 	public static final int CAPTIONLABEL = 0;
-	
+
 	public static final int VALUELABEL = 1;
-	
+
 	public static final int SINGLE = 0;
-	public static final int ALL = 1;
+
+	@Deprecated public static final int ALL = 1;
+
+	public static final int MULTI = 1;
+	
 }

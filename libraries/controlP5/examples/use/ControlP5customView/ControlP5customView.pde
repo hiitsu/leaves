@@ -1,11 +1,11 @@
 /**
-* ControlP5 ControllerDisplay
+* ControlP5 Custom View
 *
 *
 * find a list of public methods available for the ControllerDisplay Controller
 * at the bottom of this sketch.
 *
-* by Andreas Schlegel, 2011
+* by Andreas Schlegel, 2012
 * www.sojamo.de/libraries/controlp5
 *
 */

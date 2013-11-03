@@ -52,15 +52,17 @@ public class Tooltip {
 
 	private int _myAlignH = ControlP5.RIGHT;
 
+	private int _myColor = 0x00000000;
+
 	Tooltip(ControlP5 theControlP5) {
 		cp5 = theControlP5;
-		position = new PVector();
+		position = new PVector(-1000, -1000);
 		currentPosition = new PVector();
 		previousPosition = new PVector();
 		offset = new PVector(0, 24, 0);
 		map = new HashMap<Controller<?>, String>();
 		_myLabel = new Label(cp5, "tooltip");
-		_myLabel.setColor(0xff000000);
+		_myLabel.setColor(_myColor);
 		_myLabel.setPadding(0, 0);
 		setView(new TooltipView());
 		setBorder(4);
@@ -109,18 +111,17 @@ public class Tooltip {
 			_myLabel.setHeight(_myLabel.getLineHeight() * n);
 		}
 		_myLabel.set(theText);
-		_myHeight = _myLabel.getHeight()+2;
 	}
 
 	/**
 	 * @param theWindow
 	 */
 	void draw(ControlWindow theWindow) {
-//		System.out.println(previousPosition+"\t"+currentPosition+"\t"+position);
+		// System.out.println(previousPosition+"\t"+currentPosition+"\t"+position);
 		if (enabled) {
-			
+
 			if (_myMode >= ControlP5.WAIT) {
-				
+
 				previousPosition.set(currentPosition);
 				currentPosition.set(theWindow.mouseX, theWindow.mouseY, 0);
 
@@ -133,7 +134,7 @@ public class Tooltip {
 							}
 
 							if (System.nanoTime() > startTime + (_myDelayInMillis * 1000000)) {
-								
+
 								position.set(currentPosition);
 								_myAlignH = ControlP5.RIGHT;
 								if (position.x > (_myController.getControlWindow().papplet().width - (getWidth() + 20))) {
@@ -165,12 +166,13 @@ public class Tooltip {
 						case (ControlP5.DONE):
 							_myController = null;
 							_myMode = ControlP5.INACTIVE;
+							position.set(-1000, -1000, 0);
 						}
 
 						_myAlpha = PApplet.max(0, PApplet.min(_myAlpha, _myMaxAlpha));
 
 						if (_myMode >= ControlP5.WAIT) {
-							_myAlpha = (_myMode == ControlP5.WAIT) ? 0:_myAlpha;
+							_myAlpha = (_myMode == ControlP5.WAIT) ? 0 : _myAlpha;
 							theWindow.papplet().pushMatrix();
 							theWindow.papplet().translate(position.x, position.y);
 							theWindow.papplet().translate(offset.x, offset.y);
@@ -193,8 +195,8 @@ public class Tooltip {
 	}
 
 	/**
-	 * A tooltip is activated when entered by the mouse, after a given delay time the Tooltip starts
-	 * to fade in. Use setDelay(long) to adjust the default delay time of 1000 millis.
+	 * A tooltip is activated when entered by the mouse, after a given delay time the Tooltip starts to fade in. Use setDelay(long) to
+	 * adjust the default delay time of 1000 millis.
 	 * 
 	 * @param theMillis
 	 * @return Tooltip
@@ -236,8 +238,7 @@ public class Tooltip {
 	}
 
 	/**
-	 * A custom view can be set for a Tooltip. The default view class can be found at the bottom of
-	 * the Tooltip source.
+	 * A custom view can be set for a Tooltip. The default view class can be found at the bottom of the Tooltip source.
 	 * 
 	 * @see controlP5.ControllerView
 	 * @param theDisplay
@@ -249,8 +250,8 @@ public class Tooltip {
 	}
 
 	/**
-	 * registers a controller with the Tooltip, when activating the tooltip for a particular
-	 * controller, the registered text (second parameter) will be displayed.
+	 * registers a controller with the Tooltip, when activating the tooltip for a particular controller, the registered text (second
+	 * parameter) will be displayed.
 	 * 
 	 * @param theController
 	 * @param theText
@@ -293,8 +294,8 @@ public class Tooltip {
 	}
 
 	/**
-	 * with the default display, the width of the tooltip is set automatically, therefore setWidth()
-	 * does not have any effect without changing the default display to a custom ControllerView.
+	 * with the default display, the width of the tooltip is set automatically, therefore setWidth() does not have any effect without
+	 * changing the default display to a custom ControllerView.
 	 * 
 	 * @see controlP5.ControllerView
 	 * @see controlP5.Tooltip#setDisplay(ControllerView)
@@ -316,13 +317,13 @@ public class Tooltip {
 	 * @return Tooltip
 	 */
 	public Tooltip setHeight(int theHeight) {
+		ControlP5.logger().warning("Tooltip.setHeight is disabled with this version");
 		_myHeight = theHeight;
 		return this;
 	}
 
 	/**
-	 * adds an offset to the position of the controller relative to the mouse cursor's position.
-	 * default offset is (10,20)
+	 * adds an offset to the position of the controller relative to the mouse cursor's position. default offset is (10,20)
 	 * 
 	 * @param theX
 	 * @param theY
@@ -335,9 +336,8 @@ public class Tooltip {
 	}
 
 	/**
-	 * disables the Tooltip on a global level, when disabled, tooltip will not respond to any
-	 * registered controller. to disable a tooltip for aparticular controller, used
-	 * unregister(Controller)
+	 * disables the Tooltip on a global level, when disabled, tooltip will not respond to any registered controller. to disable a tooltip
+	 * for aparticular controller, used unregister(Controller)
 	 * 
 	 * @see controlP5.Tooltip#unregister(Controller)
 	 * @return Tooltip
@@ -404,6 +404,7 @@ public class Tooltip {
 	 * @return Tooltip
 	 */
 	public Tooltip setColorLabel(int theColor) {
+		_myColor = theColor;
 		_myLabel.setColor(theColor);
 		return this;
 	}
@@ -411,8 +412,9 @@ public class Tooltip {
 	class TooltipView implements ControllerView<Controller<?>> {
 
 		public void display(PApplet theApplet, Controller<?> theController) {
+			_myHeight = _myLabel.getHeight();
 			theApplet.fill(_myBackgroundColor, _myAlpha);
-			theApplet.rect(0, 0, getWidth() + _myBorder * 2, _myHeight + _myBorder);
+			theApplet.rect(0, 0, getWidth() + _myBorder * 2, _myHeight + _myBorder * 2);
 			theApplet.pushMatrix();
 			if (_myAlignH == ControlP5.RIGHT) {
 				theApplet.translate(6, 0);
@@ -421,9 +423,9 @@ public class Tooltip {
 			}
 			theApplet.triangle(0, 0, 4, -4, 8, 0);
 			theApplet.popMatrix();
-			theApplet.tint(255, PApplet.map(_myAlpha, 0, _myMaxAlpha, 0, 255));
+			int a = (int) (PApplet.map(_myAlpha, 0, _myMaxAlpha, 0, 255));
+			_myLabel.setColor(a << 24 | (_myColor >> 16) << 16 | (_myColor >> 8) << 8 | (_myColor >> 0) << 0);
 			_myLabel.draw(theApplet, 0, 0, theController);
-			theApplet.tint(255);
 		}
 	}
 }

@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -35,14 +35,6 @@ package controlP5;
  */
 public class ControlEvent {
 
-	protected final ControllerInterface<?> _myController;
-
-	protected boolean isTab;
-
-	protected boolean isController;
-
-	protected boolean isGroup;
-
 	public static int UNDEFINDED = -1;
 
 	public static int CONTROLLER = 0;
@@ -50,6 +42,14 @@ public class ControlEvent {
 	public static int TAB = 1;
 
 	public static int GROUP = 2;
+
+	protected final ControllerInterface<?> _myController;
+
+	protected boolean isTab;
+
+	protected boolean isController;
+
+	protected boolean isGroup;
 
 	protected int myAction;
 
@@ -104,6 +104,18 @@ public class ControlEvent {
 	}
 
 	/**
+	 * Returns a float value at a particular index from a controller's array value. No error
+	 * checking available here, will throw ArrayIndexOutOfBOundsException in case of unavailable
+	 * index.
+	 * 
+	 * @param theIndex
+	 * @return
+	 */
+	public float getArrayValue(int theIndex) {
+		return _myController.getArrayValue()[theIndex];
+	}
+
+	/**
 	 * Returns the instance of the controller sending the ControlEvent.
 	 * 
 	 * @return Controller
@@ -124,7 +136,7 @@ public class ControlEvent {
 	/**
 	 * Returns the group that evoked the ControlEvent
 	 * 
-	 * @return ControlGroup 
+	 * @return ControlGroup
 	 */
 	public ControlGroup<?> getGroup() {
 		return (ControlGroup<?>) _myController;
@@ -227,13 +239,12 @@ public class ControlEvent {
 	public boolean isAssignableFrom(Class<?> c) {
 		return _myController.getClass().isAssignableFrom(c);
 	}
-	
+
 	/**
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public int type() {
+	@Deprecated public int type() {
 		return getType();
 	}
 
@@ -241,8 +252,7 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public int id() {
+	@Deprecated public int id() {
 		return getId();
 	}
 
@@ -250,8 +260,7 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public String name() {
+	@Deprecated public String name() {
 		return getName();
 	}
 
@@ -259,8 +268,7 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public String label() {
+	@Deprecated public String label() {
 		return getLabel();
 	}
 
@@ -268,8 +276,7 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public float value() {
+	@Deprecated public float value() {
 		return getValue();
 	}
 
@@ -277,8 +284,7 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public String stringValue() {
+	@Deprecated public String stringValue() {
 		return getStringValue();
 	}
 
@@ -286,8 +292,7 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public float[] arrayValue() {
+	@Deprecated public float[] arrayValue() {
 		return getArrayValue();
 	}
 
@@ -295,8 +300,7 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public Controller<?> controller() {
+	@Deprecated public Controller<?> controller() {
 		return getController();
 	}
 
@@ -304,8 +308,7 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public ControlGroup<?> group() {
+	@Deprecated public ControlGroup<?> group() {
 		return getGroup();
 	}
 
@@ -313,8 +316,11 @@ public class ControlEvent {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public Tab tab() {
+	@Deprecated public Tab tab() {
 		return getTab();
+	}
+	
+	public String toString() {
+		return "[ ControlEvent from:"+_myController.getClass().getSimpleName()+" value:"+getValue()+" name:"+getName()+" ]";
 	}
 }

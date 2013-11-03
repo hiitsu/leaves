@@ -24,7 +24,7 @@
 
 import controlP5.*;
 
-ControlP5 controlP5;
+ControlP5 cp5;
 public int myColor = color(0,0,0);
 
 public int sliderValue = 100;
@@ -34,26 +34,44 @@ public int sliderTicks2 = 30;
 
 void setup() {
   size(400,400);
-  controlP5 = new ControlP5(this);
-  
+  cp5 = new ControlP5(this);
+  noStroke();
   // add a vertical slider
-  controlP5.addSlider("slider",0,200,128,20,100,10,100);
+  cp5.addSlider("slider")
+  .setRange(0,200)
+  .setValue(128)
+  .setPosition(20,100)
+  .setSize(10,100)
+  ;
   // create another slider with tick marks, now without
   // default value, the initial value will be set according th
   // the value of variable sliderTicks2 then.
-  controlP5.addSlider("sliderTicks1",0,255,100,100,10,100);
-  Slider s1 = (Slider)controlP5.controller("sliderTicks1");
-  s1.setNumberOfTickMarks(5);
+  cp5.addSlider("sliderTicks1")
+     .setRange(0,255)
+     .setPosition(100,100)
+     .setSize(10,100)
+     .setNumberOfTickMarks(5)
+     ;
   
   
   // add horizontal sliders
-  controlP5.addSlider("sliderValue",0,255,128,200,180,100,10);
-  controlP5.addSlider("sliderTicks2",0,255,128,200,220,100,10);
-  Slider s2 = (Slider)controlP5.controller("sliderTicks2");
-  s2.setNumberOfTickMarks(7);
+  cp5.addSlider("sliderValue")
+     .setRange(0,255)
+     .setValue(128)
+     .setPosition(200,180)
+     .setSize(100,10)
+     ;
+  
+  cp5.addSlider("sliderTicks2")
+     .setRange(0,255)
+     .setValue(128)
+     .setPosition(200,220)
+     .setSize(100,10)
+     .setNumberOfTickMarks(7)
+     .setSliderMode(Slider.FLEXIBLE);
+     ;   
   // use Slider.FIX or Slider.FLEXIBLE to change the slider handle
   // by default it is Slider.FIX
-  s2.setSliderMode(Slider.FLEXIBLE);
   
 }
 
@@ -80,9 +98,9 @@ void keyPressed() {
   // alt+shift+l to load properties
   // alt+shift+s to save properties
   if(key=='1') {
-    controlP5.saveProperties(("hello.ser"));
+    cp5.saveProperties(("hello.ser"));
   } else if(key=='2') {
-    controlP5.loadProperties(("hello.ser"));
+    cp5.loadProperties(("hello.ser"));
   }
 }
 

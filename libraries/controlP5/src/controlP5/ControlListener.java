@@ -20,15 +20,15 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
 /**
  * ControlListener is an interface that can be implemented by a custom class to
  * be notified when controller values change. To add a ControlListener to a
- * controller use ÊController.addListner()
+ * controller use Controller.addListner()
  * 
  * @see controlP5.Controller#addListener(ControlListener)
  * @see controlP5.CallbackListener

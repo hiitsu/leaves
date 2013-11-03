@@ -1,15 +1,16 @@
 /**
-* ControlP5 snapshot
-* this example shows how to use the snapshot methods for ControllerProperties.
-* Snapshots allow you to save controller states in memory, recall, save and remove them.
-*
-* find a list of public methods available for the ControllerProperties Controller
-* at the bottom of this sketch.
-*
-* by Andreas Schlegel, 2011
-* www.sojamo.de/libraries/controlp5
-*
-*/
+ * ControlP5 snapshot
+ *
+ * this example shows how to use the snapshot methods for ControllerProperties.
+ * Snapshots allow you to save controller states in memory, recall, save and remove them.
+ *
+ * find a list of public methods available for the ControllerProperties Controller
+ * at the bottom of this sketch.
+ *
+ * by Andreas Schlegel, 2012
+ * www.sojamo.de/libraries/controlp5
+ *
+ */
 
 
 
@@ -27,26 +28,38 @@ void setup() {
   smooth();
   cp5 = new ControlP5(this);
 
-  Numberbox nb1 = cp5.addNumberbox("n", 10, 10, 42, 16);
-  nb1.setMultiplier(0.1);
-  nb1.setMin(60);
-  nb1.setMax(140);
+  cp5.addNumberbox("n")
+  .setPosition(10, 10)
+  .setSize(42, 16)
+  .setMultiplier(0.1)
+  .setRange(10,60)
+  .setValue(20)
+  ;
 
-  Slider s1 = cp5.addSlider("s", 0, 200, 10, 100, 100, 20);
-  s1.setScrollSensitivity(0.01);
-  s1.setMin(60);
-  s1.setMax(140);
-  s1.alignValueLabel(Controller.BOTTOM);
+  cp5.addSlider("s")
+  .setPosition(10, 100)
+  .setSize(100, 20)
+  .setScrollSensitivity(0.01)
+  .setRange(60,140)
+  .setValue(100)
+  ;
+  
 
-  Knob k1 = cp5.addKnob("k", 0, 200, 200, 100, 100);
-  k1.setScrollSensitivity(0.001);
-  k1.setMin(60);
-  k1.setMax(140);
-  k1.setDisplayStyle(Controller.ARC);
+  cp5.addKnob("k")
+  .setPosition(200, 100)
+  .setRadius(50)
+  .setScrollSensitivity(0.001)
+  .setMin(60)
+  .setMax(140)
+  .setDisplayStyle(Controller.ARC)
+  ;
 
-  Range r1 = cp5.addRange("r", 0, 200, 10, 200, 100, 20);
-  r1.setMin(60);
-  r1.setMax(140);
+  cp5.addRange("r")
+  .setPosition(10,200)
+  .setSize(100,20)
+  .setRange(0, 200)
+  .setRangeValues(50,100)
+  ;
 } 
 
 

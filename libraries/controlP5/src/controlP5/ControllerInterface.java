@@ -20,13 +20,12 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
-import java.awt.event.KeyEvent;
-
+import processing.event.KeyEvent;
 import processing.core.PApplet;
 import processing.core.PVector;
 
@@ -55,7 +54,13 @@ public interface ControllerInterface<T> {
 	public String getStringValue();
 
 	public float[] getArrayValue();
-
+	
+	public float getArrayValue(int theIndex);
+	
+	public T setArrayValue(int theIndex, float theValue);
+	
+	public T setArrayValue(float[] theArray);
+	
 	public int getId();
 
 	public PVector getPosition();
@@ -176,6 +181,9 @@ public interface ControllerInterface<T> {
 	
 	public T setMouseOver(boolean theFlag);
 	
+	public T addListener(ControlListener theListener);
+	
+	public T setCaptionLabel(String theValue);
 	/**
 	 * @exclude
 	 * @deprecated

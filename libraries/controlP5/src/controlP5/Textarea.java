@@ -20,17 +20,20 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
+
+import java.util.Arrays;
+import java.util.List;
 
 import processing.core.PApplet;
 import processing.core.PFont;
 
 /**
  * a textarea can be used to leave notes, it uses the controlP5 BitFont to render text. Scrollbars
- * will automaticaly be added when text extends the visible area. Textarea extends ControllerGroup,
+ * will automatically be added when text extends the visible area. Textarea extends ControllerGroup,
  * for more methods available see the ControllerGroup documentation.
  * 
  * @example controllers/ControlP5textarea
@@ -54,6 +57,18 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	private int _myScrollbarWidth = 5;
 
 	/**
+	 * Convenience constructor to extend Textarea.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public Textarea(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, "", 0, 0, 199, 99);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
+
+	/**
 	 * 
 	 * @param theControlP5 ControlP5
 	 * @param theGroup ControllerGroup
@@ -64,7 +79,8 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	 * @param theW int
 	 * @param theH int
 	 */
-	protected Textarea(ControlP5 theControlP5, ControllerGroup<?> theGroup, String theName, String theText, int theX, int theY, int theW, int theH) {
+	protected Textarea(ControlP5 theControlP5, ControllerGroup<?> theGroup, String theName, String theText, int theX,
+			int theY, int theW, int theH) {
 		super(theControlP5, theGroup, theName, theX, theY);
 		_myWidth = theW;
 		_myHeight = theH;
@@ -86,15 +102,16 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 
 	private void setup() {
 		_myValueLabel = new Label(cp5, _myText);
-		if (_myValueLabel.getFont().get() instanceof ControlFont.BitFontLabel) {
-			_myValueLabel.setFont(BitFontRenderer.standard56);
-		}
+		
+		_myValueLabel.setFont(cp5.controlFont==cp5.defaultFont ? cp5.defaultFontForText : cp5.controlFont);
+		
 		_myValueLabel.setWidth((int) _myWidth);
 		_myValueLabel.setHeight((int) _myHeight);
 		_myValueLabel.setMultiline(true);
 		_myValueLabel.toUpperCase(false);
 		_myValueLabel.setColor(color.getValueLabel());
-
+		
+		
 		_myScrollbar = new Slider(cp5, _myParent, getName() + "Scroller", 0, 1, 1, _myWidth - 5, 0, 5, _myHeight);
 		_myScrollbar.init();
 		_myScrollbar.setBroadcast(false);
@@ -139,8 +156,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 		return _myScrollbar.isVisible();
 	}
 
-	@Override
-	public Textarea setColorBackground(int theColor) {
+	@Override public Textarea setColorBackground(int theColor) {
 		_myColorBackground = theColor;
 		isColorBackground = true;
 		return this;
@@ -171,8 +187,8 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	 */
 	private void scroll() {
 		_myScrollValue = PApplet.min(PApplet.max(-1, _myScrollValue), 0);
-		
-		float myLen = _myValueLabel.getTextHeight()+ _myValueLabel.getLineHeight();
+
+		float myLen = _myValueLabel.getTextHeight() + _myValueLabel.getLineHeight();
 		float myOffset = 0;
 		boolean isScrollbar = _myHeight < myLen;
 		if (isScrollbar) {
@@ -183,8 +199,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 		_myValueLabel.setOffsetYratio(_myScrollValue);
 	}
 
-	@ControlP5.Invisible
-	public void scrolled(int theStep) {
+	@ControlP5.Invisible public void scrolled(int theStep) {
 		if (_myScrollbar.isVisible()) {
 			int lines = (_myValueLabel.getTextHeight() / _myValueLabel.getLineHeight());
 			float step = 1.0f / lines;
@@ -192,8 +207,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 		}
 	}
 
-	@ControlP5.Invisible
-	public float getScrollPosition() {
+	@ControlP5.Invisible public float getScrollPosition() {
 		return _myScrollbar.getValue();
 	}
 
@@ -202,8 +216,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	 * 
 	 * @param theValue int
 	 */
-	@Override
-	public Textarea setWidth(int theValue) {
+	@Override public Textarea setWidth(int theValue) {
 		theValue = (theValue < 10) ? 10 : theValue;
 		_myWidth = theValue;
 		_myValueLabel.setWidth(_myWidth - _myScrollbarWidth - 10);
@@ -215,8 +228,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	 * 
 	 * @param theValue int
 	 */
-	@Override
-	public Textarea setHeight(int theValue) {
+	@Override public Textarea setHeight(int theValue) {
 		theValue = (theValue < 10) ? 10 : theValue;
 		_myHeight = theValue;
 		_myValueLabel.setHeight(_myHeight - 2);
@@ -229,7 +241,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 		setHeight(theHeight);
 		return this;
 	}
-	
+
 	/**
 	 * set the lineheight of the textarea.
 	 * 
@@ -268,8 +280,28 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	public Textarea setText(String theText) {
 		_myValueLabel.set(theText);
 		_myScrollValue = (float) (_myHeight) / (float) (_myValueLabel.getTextHeight());
-		_myScrollbar.setHeight(_myHeight + _myValueLabel.getStyle().paddingTop + _myValueLabel.getStyle().paddingBottom);
+		_myScrollbar
+				.setHeight(_myHeight + _myValueLabel.getStyle().paddingTop + _myValueLabel.getStyle().paddingBottom);
 		return this;
+	}
+
+	public Textarea clear() {
+		return setText("");
+	}
+
+	public Textarea append(String theText) {
+		return setText(getText() + theText);
+	}
+
+	public Textarea append(String theText, int max) {
+		String str = getText() + theText;
+
+		if (max == -1) {
+			return setText(str);
+		}
+
+		List<String> strs = Arrays.asList(str.split("\n"));
+		return setText(CP.join(strs.subList(Math.max(0, strs.size() - max), strs.size()), "\n"));
 	}
 
 	/**
@@ -281,13 +313,13 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 		return getStringValue();
 	}
 
-	@Override
-	protected void preDraw(PApplet theApplet) {
+	@Override protected void preDraw(PApplet theApplet) {
 		if (isScrollbarVisible) {
 			_myScrollbar.setVisible(_myValueLabel.getOverflow() > 1);
 		}
 		if (_myScrollbar.isVisible() || isColorBackground) {
-			_myScrollbar.getPosition().x = _myWidth - _myScrollbarWidth + _myValueLabel.getStyle().paddingLeft + _myValueLabel.getStyle().paddingRight;
+			_myScrollbar.getPosition().x = _myWidth - _myScrollbarWidth + _myValueLabel.getStyle().paddingLeft
+					+ _myValueLabel.getStyle().paddingRight;
 			if (!isColorBackground) {
 				theApplet.noFill();
 			} else {
@@ -303,8 +335,10 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	// !!! add padding to the box.
 	// padding and margin doesnt work nicely with textarea yet!
 	protected boolean inside() {
-		return (_myControlWindow.mouseX > position.x + _myParent.absolutePosition.x && _myControlWindow.mouseX < position.x + _myParent.absolutePosition.x + _myWidth
-				&& _myControlWindow.mouseY > position.y + _myParent.absolutePosition.y && _myControlWindow.mouseY < position.y + _myParent.absolutePosition.y + _myHeight);
+		return (cp5.getWindow().mouseX > position.x + _myParent.absolutePosition.x
+				&& cp5.getWindow().mouseX < position.x + _myParent.absolutePosition.x + _myWidth
+				&& cp5.getWindow().mouseY > position.y + _myParent.absolutePosition.y && cp5.getWindow().mouseY < position.y
+				+ _myParent.absolutePosition.y + _myHeight);
 	}
 
 	public String getStringValue() {
@@ -315,7 +349,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 		getValueLabel().setFont(theFont);
 		return this;
 	}
-	
+
 	public Textarea setFont(PFont thePFont) {
 		getValueLabel().setFont(thePFont);
 		return this;
@@ -365,23 +399,19 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public float getValue() {
+	@Override public float getValue() {
 		return 0;
 	}
 
-	@Deprecated
-	public float value() {
+	@Deprecated public float value() {
 		return 0;
 	}
 
-	@Deprecated
-	public String stringValue() {
+	@Deprecated public String stringValue() {
 		return getStringValue();
 	}
 
-	@Deprecated
-	public Label valueLabel() {
+	@Deprecated public Label valueLabel() {
 		return getValueLabel();
 	}
 
@@ -390,8 +420,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	 * @deprecated
 	 * @return
 	 */
-	@Deprecated
-	public boolean isScrollbarVisible() {
+	@Deprecated public boolean isScrollbarVisible() {
 		return isScrollbarVisible;
 	}
 
@@ -400,8 +429,7 @@ public class Textarea extends ControllerGroup<Textarea> implements ControlListen
 	 * @exclude
 	 * @return
 	 */
-	@Deprecated
-	public String text() {
+	@Deprecated public String text() {
 		return getText();
 	}
 }

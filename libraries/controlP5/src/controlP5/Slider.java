@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -65,15 +65,29 @@ public class Slider extends Controller<Slider> {
 
 	protected static int autoHeight = 9;
 
-	private float scrollSensitivity = 0.1f;
+	protected float scrollSensitivity = 0.1f;
 
-	private int _myColorTickMark = 0xffffffff;
+	protected int _myColorTickMark = 0xffffffff;
 
 	private SliderView _myView;
 
-	private float _myMinReal = 0;
+	protected float _myMinReal = 0;
 
-	private float _myMaxReal = 1;
+	protected float _myMaxReal = 1;
+
+	protected float _myInternalValue = 0;
+
+	/**
+	 * Convenience constructor to extend Slider.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public Slider(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 100, 0, 0, 0, autoWidth, autoHeight);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
 
 	/**
 	 * 
@@ -95,31 +109,27 @@ public class Slider extends Controller<Slider> {
 
 		_myMin = 0;
 		_myMax = 1;
-		
+
 		// with _myMinReal and _myMaxReal the range of values can now range 
 		// from big to small (e.g. 255 to 0) as well as from small to big (e.g. 0 to 255)
 		_myMinReal = theMin;
 		_myMaxReal = theMax;
-		
+
 		_myValue = PApplet.map(theDefaultValue, _myMinReal, _myMaxReal, 0, 1);
 
 		_myCaptionLabel = new Label(cp5, theName).setColor(color.getCaptionLabel());
 		_myValueLabel = new Label(cp5, "" + getValue()).setColor(color.getValueLabel());
-
 		setSliderMode(FIX);
-		
+
 	}
-	
-	
-	@ControlP5.Invisible
-	@Override
-	public void init() {
+
+	@ControlP5.Invisible @Override public void init() {
 		// need to override init here since _myValue will only be a 
 		// normalized value here but _myDefaultValue needs to be absolute.
 		// by normalizing _myValue the range of values can be from 'big-to-small'
 		// as well as from 'small-to-big'
-		// in order not to break anything, init() will be overriden here.
-		
+		// in order not to break anything, init() will be overwritten here.
+
 		_myDefaultValue = getValue();
 		cp5.getControlBroadcaster().plug(cp5.papplet, this, _myName);
 		initControllerValue();
@@ -127,6 +137,7 @@ public class Slider extends Controller<Slider> {
 		setValue(_myDefaultValue);
 		isInit = true;
 		updateDisplayMode(DEFAULT);
+		
 	}
 
 	/**
@@ -173,10 +184,9 @@ public class Slider extends Controller<Slider> {
 	 * @see ControllerInterface.updateInternalEvents
 	 * 
 	 */
-	@ControlP5.Invisible
-	public Slider updateInternalEvents(PApplet theApplet) {
+	@ControlP5.Invisible public Slider updateInternalEvents(PApplet theApplet) {
 		if (isVisible) {
-			if (isMousePressed && !cp5.keyHandler.isAltDown) {
+			if (isMousePressed && !cp5.isAltDown()) {
 				_myView.updateInternalEvents(theApplet);
 			}
 		}
@@ -203,13 +213,11 @@ public class Slider extends Controller<Slider> {
 		return triggerId;
 	}
 
-	@Override
-	protected void mouseReleasedOutside() {
+	@Override protected void mouseReleasedOutside() {
 		mouseReleased();
 	}
 
-	@Override
-	protected void mouseReleased() {
+	@Override protected void mouseReleased() {
 		if (triggerId == RELEASE) {
 			_myView.update();
 			broadcast(FLOAT);
@@ -233,12 +241,11 @@ public class Slider extends Controller<Slider> {
 	 * 
 	 * @param theValue float
 	 */
-	@Override
-	public Slider setValue(float theValue) {
+	@Override public Slider setValue(float theValue) {
 		if (isMousePressed && theValue == getValue()) {
 			return this;
 		}
-
+		_myInternalValue = theValue;
 		_myValue = PApplet.map(theValue, _myMinReal, _myMaxReal, 0, 1);
 		snapValue(_myValue);
 		_myValue = (_myValue <= _myMin) ? _myMin : _myValue;
@@ -251,8 +258,7 @@ public class Slider extends Controller<Slider> {
 		return this;
 	}
 
-	@Override
-	public float getValue() {
+	@Override public float getValue() {
 		return PApplet.map(_myValue, 0, 1, _myMinReal, _myMaxReal);
 	}
 
@@ -285,8 +291,7 @@ public class Slider extends Controller<Slider> {
 	 * @param theRotationValue
 	 * @return Slider
 	 */
-	@ControlP5.Invisible
-	public Slider scrolled(int theRotationValue) {
+	@ControlP5.Invisible public Slider scrolled(int theRotationValue) {
 		if (isVisible) {
 			float f = _myValue;
 			float steps = isSnapToTickMarks ? (1.0f / getNumberOfTickMarks()) : scrollSensitivity * 0.1f;
@@ -299,8 +304,7 @@ public class Slider extends Controller<Slider> {
 		return this;
 	}
 
-	@Override
-	public Slider update() {
+	@Override public Slider update() {
 		return setValue(PApplet.map(_myValue, 0, 1, _myMinReal, _myMaxReal));
 	}
 
@@ -309,8 +313,7 @@ public class Slider extends Controller<Slider> {
 	 * 
 	 * @param theValue float
 	 */
-	@Override
-	public Slider setMin(float theValue) {
+	@Override public Slider setMin(float theValue) {
 		float f = getValue();
 		_myMinReal = theValue;
 		_myValue = PApplet.map(f, _myMinReal, _myMaxReal, 0, 1);
@@ -323,27 +326,24 @@ public class Slider extends Controller<Slider> {
 	 * 
 	 * @param theValue float
 	 */
-	@Override
-	public Slider setMax(float theValue) {
+	@Override public Slider setMax(float theValue) {
 		float f = getValue();
 		_myMaxReal = theValue;
 		_myValue = PApplet.map(f, _myMinReal, _myMaxReal, 0, 1);
 		setSliderMode(_mySliderMode);
 		return this;
 	}
-	
-	@Override 
-	public float getMin() {
+
+	@Override public float getMin() {
 		return _myMinReal;
 	}
-	
-	@Override 
-	public float getMax() {
+
+	@Override public float getMax() {
 		return _myMaxReal;
 	}
-	
+
 	public Slider setRange(float theMin, float theMax) {
-		float f = getValue();
+		float f = _myInternalValue;
 		_myMinReal = theMin;
 		_myMaxReal = theMax;
 		_myValue = PApplet.map(f, _myMinReal, _myMaxReal, 0, 1);
@@ -356,8 +356,7 @@ public class Slider extends Controller<Slider> {
 	 * 
 	 * @param theValue int
 	 */
-	@Override
-	public Slider setWidth(int theValue) {
+	@Override public Slider setWidth(int theValue) {
 		width = theValue;
 		setSliderMode(_mySliderMode);
 		return this;
@@ -368,21 +367,20 @@ public class Slider extends Controller<Slider> {
 	 * 
 	 * @param theValue int
 	 */
-	@Override
-	public Slider setHeight(int theValue) {
+	@Override public Slider setHeight(int theValue) {
 		height = theValue;
 		setSliderMode(_mySliderMode);
 		return this;
 	}
 
-	@Override
-	public Slider setSize(int theWidth, int theHeight) {
+	@Override public Slider setSize(int theWidth, int theHeight) {
 		setWidth(theWidth);
 		setHeight(theHeight);
 		_myView = (width > height) ? new SliderViewH() : new SliderViewV();
 		return this;
 	}
-
+	
+		
 	/*
 	 * TODO new implementations follow: http://www.ibm.com/developerworks/java/library/j-dynui/ take
 	 * interface builder as reference
@@ -472,9 +470,7 @@ public class Slider extends Controller<Slider> {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	@ControlP5.Invisible
-	public Slider linebreak() {
+	@Override @ControlP5.Invisible public Slider linebreak() {
 		cp5.linebreak(this, true, autoWidth, autoHeight, autoSpacing);
 		return this;
 	}
@@ -497,9 +493,7 @@ public class Slider extends Controller<Slider> {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	@ControlP5.Invisible
-	public Slider updateDisplayMode(int theMode) {
+	@Override @ControlP5.Invisible public Slider updateDisplayMode(int theMode) {
 		_myDisplayMode = theMode;
 		switch (theMode) {
 		case (DEFAULT):
@@ -533,7 +527,7 @@ public class Slider extends Controller<Slider> {
 	private class SliderViewV extends SliderView {
 
 		SliderViewV() {
-			_myCaptionLabel.setColor(color.getValueLabel()).align(LEFT, BOTTOM_OUTSIDE).setPadding(0, Label.paddingY);
+			_myCaptionLabel.align(LEFT, BOTTOM_OUTSIDE).setPadding(0, Label.paddingY);
 			_myValueLabel.set("" + adjustValue(getValue())).align(RIGHT_OUTSIDE, TOP);
 		}
 
@@ -567,8 +561,8 @@ public class Slider extends Controller<Slider> {
 				theApplet.rect(0, getHeight(), getWidth(), -getValuePosition());
 			} else {
 				if (isShowTickMarks) {
-					theApplet.triangle(getWidth(), getHeight() - getValuePosition(), getWidth(), getHeight() - getValuePosition() - getHandleSize(), 0, getHeight()
-							- getValuePosition() - getHandleSize() / 2);
+					theApplet.triangle(getWidth(), getHeight() - getValuePosition(), getWidth(), getHeight() - getValuePosition() - getHandleSize(), 0, getHeight() - getValuePosition()
+							- getHandleSize() / 2);
 				} else {
 					theApplet.rect(0, getHeight() - getValuePosition() - getHandleSize(), getWidth(), getHandleSize());
 				}
@@ -601,7 +595,7 @@ public class Slider extends Controller<Slider> {
 	private class SliderViewH extends SliderView {
 
 		SliderViewH() {
-			_myCaptionLabel.setColor(color.getValueLabel()).align(RIGHT_OUTSIDE, CENTER);
+			_myCaptionLabel.align(RIGHT_OUTSIDE, CENTER);
 			_myValueLabel.set("" + adjustValue(getValue())).align(LEFT, CENTER);
 		}
 
@@ -665,8 +659,7 @@ public class Slider extends Controller<Slider> {
 		}
 	}
 
-	@Deprecated
-	public void setSliderBarSize(int theSize) {
+	@Deprecated public void setSliderBarSize(int theSize) {
 		_myDefaultHandleSize = theSize;
 		setSliderMode(_mySliderMode);
 	}
@@ -677,8 +670,7 @@ public class Slider extends Controller<Slider> {
 	 * @param theValue
 	 * @return Slider
 	 */
-	@Deprecated
-	public Slider setSensitivity(float theValue) {
+	@Deprecated public Slider setSensitivity(float theValue) {
 		return setScrollSensitivity(theValue);
 	}
 

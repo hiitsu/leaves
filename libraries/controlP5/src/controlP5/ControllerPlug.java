@@ -20,17 +20,18 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
+import java.security.AccessControlException;
 
 /**
- * The ControllerPlug is used to do all the reflection procedures to link a
- * controller to a variable or function inside your main application.
+ * The ControllerPlug is used to do all the reflection procedures to link a controller to a variable or function inside your main
+ * application.
  * 
  * @example use/ControlP5plugTo
  */
@@ -128,18 +129,20 @@ public class ControllerPlug {
 			}
 			/* check for fields */
 		} else if (_myType == ControlP5Constants.FIELD) {
-			for (int i = 0; i < myClass.getDeclaredFields().length; i++) {
-				if (myClass.getDeclaredFields()[i].getName().equals(_myName)) {
-					_myParameterClass = myClass.getDeclaredFields()[i].getType();
+
+			Field[] myFields = ControlBroadcaster.getFieldsFor(myClass);
+
+			for (int i = 0; i < myFields.length; i++) {
+				if (myFields[i].getName().equals(_myName)) {
+					_myParameterClass = myFields[i].getType();
 				}
 			}
 			if (_myParameterClass != null) {
 				/**
-				 * note. when running in applet mode. for some reason
-				 * setAccessible(true) works for methods but not for fields.
-				 * theAccessControlException is thrown. therefore, make fields
-				 * in your code public.
+				 * note. when running in applet mode. for some reason setAccessible(true) works for methods but not for fields.
+				 * theAccessControlException is thrown. therefore, make fields in your code public.
 				 */
+
 				try {
 					_myField = myClass.getDeclaredField(_myName);
 					try {
@@ -161,7 +164,7 @@ public class ControllerPlug {
 
 	private void printSecurityWarning(Exception e) {
 		// AccessControlException required for applets.
-		if (!ControlP5.isApplet) {
+		if (e.getClass().equals(AccessControlException.class)) {
 			ControlP5.isApplet = true;
 			ControlP5.logger().warning("You are probably running in applet mode.\n" + "make sure fields and methods in your code are public.\n" + e);
 		}
@@ -231,38 +234,40 @@ public class ControllerPlug {
 		return _myField;
 	}
 
-	@Deprecated
-	protected Class<?> classType() {
+	static public boolean checkPlug(Object theObject, String thePlugName, Class<?>[] theArgs) {
+		try {
+			theObject.getClass().getDeclaredMethod(thePlugName, theArgs);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	@Deprecated protected Class<?> classType() {
 		return _myParameterClass;
 	}
 
-	@Deprecated
-	protected Object value() {
+	@Deprecated protected Object value() {
 		return _myValue;
 	}
 
-	@Deprecated
-	protected Object object() {
+	@Deprecated protected Object object() {
 		return _myObject;
 	}
 
-	@Deprecated
-	protected String name() {
+	@Deprecated protected String name() {
 		return _myName;
 	}
 
-	@Deprecated
-	protected int type() {
+	@Deprecated protected int type() {
 		return _myType;
 	}
 
-	@Deprecated
-	protected int parameterType() {
+	@Deprecated protected int parameterType() {
 		return _myParameterType;
 	}
 
-	@Deprecated
-	protected Class<?>[] acceptClassList() {
+	@Deprecated protected Class<?>[] acceptClassList() {
 		return _myAcceptClassList;
 	}
 

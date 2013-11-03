@@ -1,35 +1,56 @@
+/**
+ * Flob
+ * Fast multi-blob detector and simple skeleton tracker using flood-fill algorithms.
+ * http://s373.net/code/flob
+ *
+ * Copyright (C) 2008-2013 Andre Sier http://s373.net
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+ * Boston, MA  02111-1307  USA
+ */
 package s373.flob;
 
 /**
+ * ABlob extends baseBlob data struct.
  * 
- * base data struct holds info and normalized info for a simple blob
- * 
+ * ABlob holds info and normalized info for a simple blob.
+ * now also has raw integer vel calculations (not tracked blob,
+ * so not reliable, but fast).
  * 
  */
-
 public class ABlob extends baseBlob {
-	// public int id;
-	// public int pixelcount;
-	// public int boxminx,boxminy,boxmaxx,boxmaxy;
-	// public int boxcenterx,boxcentery;
 	public int boxdimx, boxdimy;
 	public int pboxcenterx, pboxcentery;
-	// normalized values
+	public int ivelx,ively;
+	// world values
 	public float cx, cy;
-	// float pcx,pcy;
+	public float bx, by;
 	public float dimx, dimy;
 
-	// /features:
+	/// features:
 	public float armleftx, armlefty, armrightx, armrighty, headx, heady,
 			bottomx, bottomy, footleftx, footlefty, footrightx, footrighty;
 
-	// public float quad[] = new float[8]; //4*2
 
-	// / constructor
-	ABlob() {
+	public ABlob() {
+		boxdimx = boxdimy = ivelx = ively = 0;
+		cx = cy = bx = by = dimx = dimy = 0.0f;
+		pboxcenterx = pboxcentery= -1;
 	}
 
-	ABlob(ABlob b) {
+	public ABlob(ABlob b) {
 		id = b.id;
 		pixelcount = b.pixelcount;
 		boxminx = b.boxminx;
@@ -40,11 +61,20 @@ public class ABlob extends baseBlob {
 		boxcentery = b.boxcentery;
 		boxdimx = b.boxdimx;
 		boxdimy = b.boxdimy;
-		pboxcenterx = b.pboxcenterx;
-		pboxcentery = b.pboxcentery;
+		if(b.pboxcenterx==-1){
+			pboxcenterx = boxcenterx;
+			pboxcentery = boxcentery;
+		} else {
+			pboxcenterx = b.pboxcenterx;
+			pboxcentery = b.pboxcentery;
+		}
+		ivelx = boxcenterx - pboxcenterx;
+		ively = boxcentery - pboxcentery;
+
 		cx = b.cx;
 		cy = b.cy;
-		// pcx = b.pcx; pcy = b.pcy;
+		bx = b.bx;
+		by = b.by;
 		dimx = b.dimx;
 		dimy = b.dimy;
 
@@ -56,11 +86,9 @@ public class ABlob extends baseBlob {
 		heady = b.heady;
 		bottomx = b.bottomx;
 		bottomy = b.bottomy;
-		heady = b.heady;
 		footleftx = b.footleftx;
 		footlefty = b.footlefty;
 		footrightx = b.footrightx;
 		footrighty = b.footrighty;
-
 	}
 }

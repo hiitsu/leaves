@@ -23,9 +23,6 @@ TestControl tc1, tc2;
 
 Tab extraTab;
 
-
-
-
 // create controllers using the ControlElement annotation
 // by default a slider is created for int and float 
 // values will range from 0-100 by default
@@ -47,6 +44,15 @@ void setup() {
   noStroke();
 
   cp5 = new ControlP5(this);
+  
+  // Annotations:
+  // addControllersFor(PApplet) checks the main sketch for 
+  // annotations and adds controllers accordingly.
+  cp5.addControllersFor(this);
+  
+  
+  
+  
   extraTab = cp5.addTab("extra");
 
   // create an instance of class testControl

@@ -15,7 +15,7 @@ int sliderValue = 100;
 
 void setup() {
   size(400,400);
-  frameRate(30);
+  noStroke();
   controlP5 = new ControlP5(this);
   PFont p = createFont("Georgia",12); 
   controlP5.setControlFont(p,12);

@@ -1,3 +1,4 @@
+
 package controlP5;
 
 import java.lang.reflect.InvocationTargetException;
@@ -27,8 +28,8 @@ import processing.core.PImage;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -41,11 +42,26 @@ import processing.core.PImage;
  * @see controlP5.Toggle
  * 
  */
-public class CheckBox extends ControlGroup<CheckBox>{
+public class CheckBox extends ControlGroup<CheckBox> {
 
-	
 	private Object _myPlug;
-	
+
+	private String _myPlugName;
+
+
+	/**
+	 * Convenience constructor to extend CheckBox.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public CheckBox(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
+
+
 	/**
 	 * A CheckBox should only be added to controlP5 by using controlP5.addCheckBox()
 	 * 
@@ -64,7 +80,12 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		setItemsPerRow(1);
 		isMultipleChoice = true;
 		_myPlug = cp5.papplet;
+		_myPlugName = getName();
+		if (!ControllerPlug.checkPlug(_myPlug, _myPlugName, new Class[] { float[].class })) {
+			_myPlug = null;
+		}
 	}
+
 
 	public final CheckBox activateAll() {
 		int n = _myRadioToggles.size();
@@ -74,6 +95,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		updateValues();
 		return this;
 	}
+
 
 	/**
 	 * Activates a single checkbox item by index
@@ -86,6 +108,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * deactivate a single checkbox item by index
 	 */
@@ -97,6 +120,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * toggle a single checkbox item by index
 	 */
@@ -105,13 +129,15 @@ public class CheckBox extends ControlGroup<CheckBox>{
 			Toggle t = _myRadioToggles.get(theIndex);
 			if (t.getState() == true) {
 				t.deactivate();
-			} else {
+			}
+			else {
 				t.activate();
 			}
 			updateValues();
 		}
 		return this;
 	}
+
 
 	/**
 	 * deactivate a single checkbox item by name
@@ -123,7 +149,8 @@ public class CheckBox extends ControlGroup<CheckBox>{
 			if (theName.equals(t.getName())) {
 				if (t.getState() == true) {
 					t.deactivate();
-				} else {
+				}
+				else {
 					t.activate();
 				}
 				updateValues();
@@ -131,6 +158,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 			}
 		}
 	}
+
 
 	/**
 	 * Activates a single checkbox item by name
@@ -148,6 +176,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * Deactivates a single checkbox item by name
 	 */
@@ -164,22 +193,24 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	private final void updateValues() {
 		_myValue = -1;
 		updateValues(true);
 	}
 
+
 	/**
 	 * Sets the value for all CheckBox items according to the values of the array passed on. 0 will
 	 * turn off an item, any other value will turn it on.
 	 */
-	@Override
-	public CheckBox setArrayValue(float[] theArray) {
+	@Override public CheckBox setArrayValue(float[] theArray) {
 		for (int i = 0; i < theArray.length; i++) {
 			if (_myArrayValue[i] != theArray[i]) {
 				if (theArray[i] == 0) {
 					_myRadioToggles.get(i).deactivate();
-				} else {
+				}
+				else {
 					_myRadioToggles.get(i).activate();
 				}
 			}
@@ -188,23 +219,23 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
-	/**
-	 * @exclude {@inheritDoc}
-	 */
-	@Override
-	public String getInfo() {
-		return "type:\tCheckBox\n" + super.getInfo();
-	}
 
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@Override
-	public String toString() {
+	@Override public String getInfo() {
+		return "type:\tCheckBox\n" + super.getInfo();
+	}
+
+
+	/**
+	 * @exclude {@inheritDoc}
+	 */
+	@Override public String toString() {
 		return super.toString();
 	}
-	
-	
+
+
 	protected List<Toggle> _myRadioToggles;
 
 	protected int spacingRow = 1;
@@ -225,7 +256,6 @@ public class CheckBox extends ControlGroup<CheckBox>{
 
 	protected boolean noneSelectedAllowed = true;
 
-	
 
 	/**
 	 * @param theName
@@ -241,6 +271,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		addItem(t, theValue);
 		return this;
 	}
+
 
 	/**
 	 * @param theToggle
@@ -261,6 +292,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * @param theName
 	 */
@@ -276,6 +308,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * 
 	 * @param theDefaultImage
@@ -290,12 +323,14 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * @param theImage
 	 */
 	public CheckBox setImage(PImage theImage) {
 		return setImage(theImage, DEFAULT);
 	}
+
 
 	/**
 	 * @param theImage
@@ -314,15 +349,18 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	public CheckBox setSize(PImage theImage) {
 		return setSize(theImage.width, theImage.height);
 	}
+
 
 	public CheckBox setSize(int theWidth, int theHeight) {
 		setItemWidth(theWidth);
 		setItemHeight(theHeight);
 		return this;
 	}
+
 
 	/**
 	 * set the height of a radioButton/checkBox item. by default the height is 11px. in order to
@@ -340,6 +378,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * set the width of a radioButton/checkBox item. by default the width is 11px. in order to
 	 * recognize a custom width, the itemWidth has to be set before adding items to a
@@ -356,6 +395,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * Gets a radio button item by index.
 	 * 
@@ -365,10 +405,12 @@ public class CheckBox extends ControlGroup<CheckBox>{
 	public Toggle getItem(int theIndex) {
 		return _myRadioToggles.get(theIndex);
 	}
-	
+
+
 	public List<Toggle> getItems() {
 		return _myRadioToggles;
 	}
+
 
 	/**
 	 * Gets the state of an item - this can be true (for on) or false (for off) - by index.
@@ -382,6 +424,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		}
 		return false;
 	}
+
 
 	/**
 	 * Gets the state of an item - this can be true (for on) or false (for off) - by name.
@@ -399,6 +442,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		}
 		return false;
 	}
+
 
 	/**
 	 * @exclude
@@ -420,11 +464,13 @@ public class CheckBox extends ControlGroup<CheckBox>{
 				_myWidth = xx;
 				yy += t.height + spacingRow;
 				xx = 0;
-			} else {
+			}
+			else {
 				_myWidth = xx;
 			}
 		}
 	}
+
 
 	/**
 	 * Items of a radioButton or a checkBox are organized in columns and rows. SetItemsPerRow sets
@@ -438,6 +484,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * Sets the spacing in pixels between columns.
 	 * 
@@ -449,6 +496,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	/**
 	 * Sets the spacing in pixels between rows.
 	 * 
@@ -459,6 +507,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		updateLayout();
 		return this;
 	}
+
 
 	public CheckBox deactivateAll() {
 		if (!isMultipleChoice && !noneSelectedAllowed) {
@@ -473,15 +522,14 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
-	
+
 	/**
 	 * {@inheritDoc}
 	 * 
 	 * @exclude
 	 */
-	@ControlP5.Invisible
-	@Override
-	public void controlEvent(ControlEvent theEvent) {
+	@ControlP5.Invisible @Override public void controlEvent(ControlEvent theEvent) {
+
 		if (!isMultipleChoice) {
 			if (noneSelectedAllowed == false && theEvent.getController().getValue() < 1) {
 				if (theEvent.getController() instanceof Toggle) {
@@ -499,32 +547,50 @@ public class CheckBox extends ControlGroup<CheckBox>{
 				Toggle t = _myRadioToggles.get(i);
 				if (!t.equals(theEvent.getController())) {
 					t.deactivate();
-				} else {
+				}
+				else {
 					if (t.isOn) {
 						_myValue = t.internalValue();
 					}
 				}
 			}
 		}
-		try {
-            Method method = _myPlug.getClass().getMethod(getName(),int.class);
-            method.invoke(_myPlug, (int)_myValue);
-        } catch (SecurityException ex) {
-            ex.printStackTrace();
-        } catch (NoSuchMethodException ex) {
-            ex.printStackTrace();
-        } catch (IllegalArgumentException ex) {
-            ex.printStackTrace();
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
-        } catch (InvocationTargetException ex) {
-            ex.printStackTrace();
-        }
 		updateValues(true);
+		if (_myPlug != null) {
+			try {
+				Method method = _myPlug.getClass().getMethod(_myPlugName, float[].class);
+				method.invoke(_myPlug, (float[]) getArrayValue());
+			} catch (SecurityException ex) {
+				ex.printStackTrace();
+			} catch (NoSuchMethodException ex) {
+				ex.printStackTrace();
+			} catch (IllegalArgumentException ex) {
+				ex.printStackTrace();
+			} catch (IllegalAccessException ex) {
+				ex.printStackTrace();
+			} catch (InvocationTargetException ex) {
+				ex.printStackTrace();
+			}
+		}
+
 	}
-	
+
+
 	public CheckBox plugTo(Object theObject) {
 		_myPlug = theObject;
+		if (!ControllerPlug.checkPlug(_myPlug, _myPlugName, new Class[] { float[].class })) {
+			_myPlug = null;
+		}
+		return this;
+	}
+
+
+	public CheckBox plugTo(Object theObject, String thePlugName) {
+		_myPlug = theObject;
+		_myPlugName = thePlugName;
+		if (!ControllerPlug.checkPlug(_myPlug, _myPlugName, new Class[] { float[].class })) {
+			_myPlug = null;
+		}
 		return this;
 	}
 
@@ -542,6 +608,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		}
 	}
 
+
 	/**
 	 * In order to always have 1 item selected, use setNoneSelectedAllowed(false), by default this
 	 * is true. setNoneSelectedAllowed does not apply when in multipleChoice mode.
@@ -553,6 +620,7 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	public CheckBox setColorLabels(int theColor) {
 		for (Toggle t : _myRadioToggles) {
 			t.getCaptionLabel().setColor(theColor);
@@ -560,20 +628,23 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
+
 	public CheckBox hideLabels() {
 		for (Toggle t : _myRadioToggles) {
 			t.getCaptionLabel().setVisible(false);
 		}
 		return this;
 	}
-	
+
+
 	public CheckBox showLabels() {
 		for (Toggle t : _myRadioToggles) {
 			t.getCaptionLabel().setVisible(true);
 		}
 		return this;
 	}
-	
+
+
 	public CheckBox toUpperCase(boolean theValue) {
 		for (Toggle t : _myRadioToggles) {
 			t.getCaptionLabel().toUpperCase(theValue);
@@ -581,15 +652,13 @@ public class CheckBox extends ControlGroup<CheckBox>{
 		return this;
 	}
 
-	
+
 	/**
 	 * @deprecated
 	 * @exclude
 	 */
-	@Deprecated
-	public CheckBox add(final String theName, final float theValue) {
+	@Deprecated public CheckBox add(final String theName, final float theValue) {
 		return addItem(theName, theValue);
 	}
-
 
 }

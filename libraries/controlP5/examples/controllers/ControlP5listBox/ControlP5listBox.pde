@@ -31,8 +31,9 @@ void setup() {
          .setSize(120, 120)
          .setItemHeight(15)
          .setBarHeight(15)
-         .setColorBackground(color(40, 128))
-         .setColorActive(color(255, 128))
+         .setColorBackground(color(255, 128))
+         .setColorActive(color(0))
+         .setColorForeground(color(255, 100,0))
          ;
 
   l.captionLabel().toUpperCase(true);

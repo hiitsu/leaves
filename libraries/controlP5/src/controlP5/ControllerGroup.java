@@ -1,3 +1,4 @@
+
 package controlP5;
 
 /**
@@ -20,23 +21,23 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 import processing.core.PApplet;
 import processing.core.PVector;
+import processing.event.KeyEvent;
 
 /**
  * ControllerGroup is an abstract class and is extended by class ControlGroup, Tab, or the ListBox.
  * 
  */
-public abstract class ControllerGroup<T> implements ControllerInterface<T>, ControlP5Constants {
+public abstract class ControllerGroup<T> implements ControllerInterface<T>, ControlP5Constants, ControlListener {
 
 	protected PVector position;
 
@@ -46,7 +47,9 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 
 	protected ControllerList controllers;
 
-	protected ControlWindow _myControlWindow;
+	protected List<ControlListener> _myControlListener;
+
+	//	protected ControlWindow _myControlWindow;
 
 	protected ControlP5 cp5;
 
@@ -70,6 +73,12 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 
 	protected boolean isOpen = true;
 
+	protected boolean isBarVisible = true;
+
+	protected boolean isArrowVisible = true;
+
+	protected Button _myCloseButton;
+
 	protected boolean isMoveable = true;
 
 	protected Label _myLabel;
@@ -82,7 +91,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 
 	protected boolean isUpdate;
 
-	protected List<ControlWindowCanvas> _myControlCanvas;
+	protected List<Canvas> _myCanvas;
 
 	protected float _myValue;
 
@@ -103,8 +112,22 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 	private String _myAddress = "";
 
 	private boolean mouseover;
-	
+
 	protected final T me;
+
+
+	/**
+	 * Convenience constructor to extend ControllerGroup.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public ControllerGroup(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
+
 
 	/**
 	 * 
@@ -118,40 +141,45 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 	public ControllerGroup(ControlP5 theControlP5, ControllerGroup<?> theParent, String theName, float theX, float theY) {
 		position = new PVector(theX, theY, 0);
 		cp5 = theControlP5;
-		me = (T)this;
+		me = (T) this;
 		color.set((theParent == null) ? cp5.color : theParent.color);
 		_myName = theName;
 		controllers = new ControllerList();
-		_myControlCanvas = new ArrayList<ControlWindowCanvas>();
+		_myCanvas = new ArrayList<Canvas>();
+		_myControlListener = new ArrayList<ControlListener>();
 		_myLabel = new Label(cp5, _myName);
+		_myLabel.setText(_myName);
 		_myLabel.setColor(color.getCaptionLabel());
+		_myLabel.align(LEFT,TOP);
 		setParent((theParent == null) ? this : theParent);
 	}
 
+
 	protected ControllerGroup(int theX, int theY) {
 		position = new PVector(theX, theY, 0);
-		me = (T)this;
+		me = (T) this;
 		controllers = new ControllerList();
-		_myControlCanvas = new ArrayList<ControlWindowCanvas>();
+		_myCanvas = new ArrayList<Canvas>();
 	}
+
 
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	public void init() {
+	@ControlP5.Invisible public void init() {
 	}
+
 
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	@Override
-	public ControllerInterface<?> getParent() {
+	@ControlP5.Invisible @Override public ControllerInterface<?> getParent() {
 		return _myParent;
 	}
 
+
 	void setParent(ControllerGroup<?> theParent) {
+		
 		if (_myParent != null && _myParent != this) {
 			_myParent.remove(this);
 		}
@@ -161,25 +189,18 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		if (_myParent != this) {
 			_myParent.add(this);
 		}
+		
 		absolutePosition = new PVector(position.x, position.y);
 
 		absolutePosition.add(_myParent.absolutePosition);
 
 		positionBuffer = new PVector(position.x, position.y);
 
-		_myControlWindow = _myParent.getWindow();
-
-		for (int i = 0; i < controllers.size(); i++) {
-			if (controllers.get(i) instanceof Controller<?>) {
-				((Controller<?>) controllers.get(i))._myControlWindow = _myControlWindow;
-			} else {
-				((ControllerGroup<?>) controllers.get(i))._myControlWindow = _myControlWindow;
-			}
-		}
-		if (_myControlWindow != null) {
+		if (cp5.getWindow() != null) {
 			setMouseOver(false);
 		}
 	}
+
 
 	/**
 	 * @param theGroup ControllerGroup
@@ -190,6 +211,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * @param theName String
 	 * @return ControllerGroup
@@ -198,6 +220,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		setParent(cp5.getGroup(theName));
 		return me;
 	}
+
 
 	/**
 	 * @param theGroup ControlGroup
@@ -219,45 +242,54 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	public final T moveTo(ControllerGroup<?> theGroup) {
 		moveTo(theGroup, null, null);
 		return me;
 	}
+
 
 	public final T moveTo(Tab theTab) {
 		moveTo(null, theTab, theTab.getWindow());
 		return me;
 	}
 
+
 	public T moveTo(PApplet thePApplet) {
 		moveTo(cp5.controlWindow);
 		return me;
 	}
+
 
 	public T moveTo(ControlWindow theControlWindow) {
 		moveTo(null, theControlWindow.getTab("default"), theControlWindow);
 		return me;
 	}
 
+
 	public final T moveTo(String theTabName) {
 		moveTo(null, cp5.controlWindow.getTab(theTabName), cp5.controlWindow);
 		return me;
 	}
+
 
 	public final T moveTo(String theTabName, ControlWindow theControlWindow) {
 		moveTo(null, theControlWindow.getTab(theTabName), theControlWindow);
 		return me;
 	}
 
+
 	public final T moveTo(ControlWindow theControlWindow, String theTabName) {
 		moveTo(null, theControlWindow.getTab(theTabName), theControlWindow);
 		return me;
 	}
 
+
 	public final T moveTo(Tab theTab, ControlWindow theControlWindow) {
 		moveTo(null, theTab, theControlWindow);
 		return me;
 	}
+
 
 	/**
 	 * @param theName String
@@ -268,10 +300,12 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	public final T setTab(ControlWindow theWindow, String theName) {
 		setParent(cp5.getTab(theWindow, theName));
 		return me;
 	}
+
 
 	/**
 	 * @param theTab Tab
@@ -281,6 +315,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		setParent(theTab);
 		return me;
 	}
+
 
 	/**
 	 * @return Tab
@@ -295,6 +330,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return _myParent.getTab();
 	}
 
+
 	protected void updateFont(ControlFont theControlFont) {
 		_myLabel.updateFont(theControlFont);
 		if (_myValueLabel != null) {
@@ -303,25 +339,27 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		for (int i = 0; i < controllers.size(); i++) {
 			if (controllers.get(i) instanceof Controller<?>) {
 				((Controller<?>) controllers.get(i)).updateFont(theControlFont);
-			} else {
+			}
+			else {
 				((ControllerGroup<?>) controllers.get(i)).updateFont(theControlFont);
 			}
 		}
 	}
 
-	@ControlP5.Invisible
-	public PVector getAbsolutePosition() {
+
+	@ControlP5.Invisible public PVector getAbsolutePosition() {
 		return new PVector(absolutePosition.x, absolutePosition.y);
 	}
+
 
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	public T setAbsolutePosition(PVector thePVector) {
+	@ControlP5.Invisible public T setAbsolutePosition(PVector thePVector) {
 		absolutePosition.set(thePVector.x, thePVector.y, thePVector.z);
 		return me;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -329,6 +367,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 	public PVector getPosition() {
 		return new PVector(position.x, position.y);
 	}
+
 
 	/**
 	 * set the position of this controller.
@@ -343,6 +382,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -350,6 +390,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		setPosition(thePVector.x, thePVector.y);
 		return me;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -363,11 +404,11 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	public void continuousUpdateEvents() {
+	@ControlP5.Invisible public void continuousUpdateEvents() {
 		if (controllers.size() <= 0) {
 			return;
 		}
@@ -375,6 +416,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 			((ControllerInterface<?>) controllers.get(i)).continuousUpdateEvents();
 		}
 	}
+
 
 	/**
 	 * @exclude
@@ -392,20 +434,21 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * enables or disables the update function of a controller.
 	 * 
 	 * @param theFlag boolean
 	 * @return ControllerGroup
 	 */
-	@Override
-	public T setUpdate(boolean theFlag) {
+	@Override public T setUpdate(boolean theFlag) {
 		isUpdate = theFlag;
 		for (int i = 0; i < controllers.size(); i++) {
 			((ControllerInterface<?>) controllers.get(i)).setUpdate(theFlag);
 		}
 		return me;
 	}
+
 
 	/**
 	 * checks the update status of a controller.
@@ -416,31 +459,33 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return isUpdate;
 	}
 
+
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	public T updateEvents() {
+	@ControlP5.Invisible public T updateEvents() {
 		if (isOpen) {
 			for (int i = controllers.size() - 1; i >= 0; i--) {
 				((ControllerInterface<?>) controllers.get(i)).updateEvents();
 			}
 		}
 		if (isVisible) {
-			if ((isMousePressed == _myControlWindow.mouselock)) {
-				if (isMousePressed && cp5.keyHandler.isAltDown && isMoveable) {
+			if ((isMousePressed == cp5.getWindow().mouselock)) {
+				if (isMousePressed && cp5.isAltDown() && isMoveable) {
 					if (!cp5.isMoveable) {
-						positionBuffer.x += _myControlWindow.mouseX - _myControlWindow.pmouseX;
-						positionBuffer.y += _myControlWindow.mouseY - _myControlWindow.pmouseY;
-						if (cp5.keyHandler.isShiftDown) {
+						positionBuffer.x += cp5.getWindow().mouseX - cp5.getWindow().pmouseX;
+						positionBuffer.y += cp5.getWindow().mouseY - cp5.getWindow().pmouseY;
+						if (cp5.isShiftDown()) {
 							position.x = ((int) (positionBuffer.x) / 10) * 10;
 							position.y = ((int) (positionBuffer.y) / 10) * 10;
-						} else {
+						}
+						else {
 							position.set(positionBuffer);
 						}
 						updateAbsolutePosition();
 					}
-				} else {
+				}
+				else {
 					if (isInside) {
 						setMouseOver(true);
 					}
@@ -450,7 +495,8 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 							onEnter();
 							setMouseOver(true);
 						}
-					} else {
+					}
+					else {
 						if (isInside && !isMousePressed) {
 							onLeave();
 							isInside = false;
@@ -463,13 +509,14 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	public T updateInternalEvents(PApplet theApplet) {
+	@ControlP5.Invisible public T updateInternalEvents(PApplet theApplet) {
 		return me;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -477,34 +524,37 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 	 * @return boolean
 	 */
 	public boolean isMouseOver() {
-		mouseover = isInside || isInsideGroup;
+		mouseover = isInside || isInsideGroup || !isBarVisible;
 		return mouseover;
 	}
 
+
 	public T setMouseOver(boolean theFlag) {
 
-		mouseover = theFlag;
+		mouseover = (!isBarVisible) ? false : theFlag;
+
 		if (!mouseover) {
 			isInside = false;
 			isInsideGroup = false;
-			_myControlWindow.removeMouseOverFor(this);
+			cp5.getWindow().removeMouseOverFor(this);
 			for (int i = controllers.size() - 1; i >= 0; i--) {
 				controllers.get(i).setMouseOver(false);
 			}
-		} else {
+		}
+		else {
 			// TODO since inside can be either isInside or isInsideGroup, there are 2 options here,
 			// which i am not sure how to handle them yet.
-			_myControlWindow.setMouseOverController(this);
+			cp5.getWindow().setMouseOverController(this);
 		}
 		return me;
 	}
+
 
 	/**
 	 * @exclude
 	 * @param theApplet PApplet
 	 */
-	@ControlP5.Invisible
-	public final void draw(PApplet theApplet) {
+	@ControlP5.Invisible public final void draw(PApplet theApplet) {
 		if (isVisible) {
 			theApplet.pushMatrix();
 			theApplet.translate(position.x, position.y);
@@ -518,11 +568,12 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		}
 	}
 
+
 	protected void drawControllers(PApplet theApplet) {
 		if (isOpen) {
 
-			for (ControlWindowCanvas cc : _myControlCanvas) {
-				if (cc.mode() == ControlWindowCanvas.PRE) {
+			for (Canvas cc : _myCanvas) {
+				if (cc.mode() == Canvas.PRE) {
 					cc.draw(theApplet);
 				}
 			}
@@ -537,32 +588,36 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 				cd.draw(theApplet);
 			}
 
-			for (ControlWindowCanvas cc : _myControlCanvas) {
-				if (cc.mode() == ControlWindowCanvas.POST) {
+			for (Canvas cc : _myCanvas) {
+				if (cc.mode() == Canvas.POST) {
 					cc.draw(theApplet);
 				}
 			}
 		}
 	}
 
+
 	protected void preDraw(PApplet theApplet) {
 	}
 
+
 	protected void postDraw(PApplet theApplet) {
 	}
+
 
 	/**
 	 * Adds a canvas to a controllerGroup such as a tab or group. Use processing's draw methods to
 	 * add visual content.
 	 * 
 	 * @param theCanvas
-	 * @return ControlWindowCanvas
+	 * @return Canvas
 	 */
-	public ControlWindowCanvas addCanvas(ControlWindowCanvas theCanvas) {
-		_myControlCanvas.add(theCanvas);
+	public Canvas addCanvas(Canvas theCanvas) {
+		_myCanvas.add(theCanvas);
 		theCanvas.setup(cp5.papplet);
 		return theCanvas;
 	}
+
 
 	/**
 	 * Removes a canvas from a controller group.
@@ -570,10 +625,11 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 	 * @param theCanvas
 	 * @return ControllerGroup
 	 */
-	public T removeCanvas(ControlWindowCanvas theCanvas) {
-		_myControlCanvas.remove(theCanvas);
+	public T removeCanvas(Canvas theCanvas) {
+		_myCanvas.remove(theCanvas);
 		return me;
 	}
+
 
 	/**
 	 * Adds a controller to the group, but use Controller.setGroup() instead.
@@ -586,16 +642,17 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
-	@Override
-	public T bringToFront() {
+
+	@Override public T bringToFront() {
 		return bringToFront(this);
 	}
 
-	@Override
-	public T bringToFront(ControllerInterface<?> theController) {
+
+	@Override public T bringToFront(ControllerInterface<?> theController) {
 		if (_myParent instanceof Tab) {
 			moveTo((Tab) _myParent);
-		} else {
+		}
+		else {
 			_myParent.bringToFront(theController);
 		}
 		if (theController != this) {
@@ -606,6 +663,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		}
 		return me;
 	}
+
 
 	/**
 	 * Removes a controller from the group, but use Controller.setGroup() instead.
@@ -622,15 +680,16 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * @param theElement CDrawable
 	 * @return ControllerGroup
 	 */
-	@ControlP5.Invisible
-	public T addDrawable(CDrawable theElement) {
+	@ControlP5.Invisible public T addDrawable(CDrawable theElement) {
 		controllers.addDrawable(theElement);
 		return me;
 	}
+
 
 	/**
 	 * @param theElement CDrawable
@@ -641,11 +700,12 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * removes the group from controlP5.
 	 */
 	public void remove() {
-		_myControlWindow.removeMouseOverFor(this);
+		cp5.getWindow().removeMouseOverFor(this);
 		if (_myParent != null) {
 			_myParent.remove(this);
 		}
@@ -660,9 +720,10 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		controllers.clearDrawable();
 		controllers = new ControllerList();
 		if (this instanceof Tab) {
-			_myControlWindow.removeTab((Tab) this);
+			cp5.getWindow().removeTab((Tab) this);
 		}
 	}
+
 
 	/**
 	 * @return String
@@ -671,6 +732,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return _myName;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -678,34 +740,36 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return _myAddress;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public T setAddress(String theAddress) {
+	@Override public T setAddress(String theAddress) {
 		if (_myAddress.length() == 0) {
 			_myAddress = theAddress;
 		}
 		return me;
 	}
 
+
 	/**
 	 * @return ControlWindow
 	 */
 	public ControlWindow getWindow() {
-		return _myControlWindow;
+		return cp5.getWindow();
 	}
+
 
 	/**
 	 * @exclude
 	 * @param theEvent KeyEvent
 	 */
-	@ControlP5.Invisible
-	public void keyEvent(KeyEvent theEvent) {
+	@ControlP5.Invisible public void keyEvent(KeyEvent theEvent) {
 		for (int i = 0; i < controllers.size(); i++) {
 			((ControllerInterface<?>) controllers.get(i)).keyEvent(theEvent);
 		}
 	}
+
 
 	/**
 	 * @exclude
@@ -727,7 +791,8 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 				mousePressed();
 				return true;
 			}
-		} else {
+		}
+		else {
 			if (isMousePressed == true) {
 				isMousePressed = false;
 				mouseReleased();
@@ -736,17 +801,26 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return false;
 	}
 
-	void mousePressed() {
+
+	protected void mousePressed() {
 	}
 
-	void mouseReleased() {
+
+	protected void mouseReleased() {
 	}
 
-	void onEnter() {
+
+	protected void onEnter() {
 	}
 
-	void onLeave() {
+
+	protected void onLeave() {
 	}
+
+
+	protected void onScroll(int theAmount) {
+	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -756,12 +830,14 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
 	public int getId() {
 		return _myId;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -772,6 +848,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		}
 		return me;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -784,6 +861,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -795,6 +873,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -805,6 +884,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		}
 		return me;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -820,6 +900,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -834,6 +915,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * @param theLabel String
 	 * @return ControllerGroup
@@ -842,6 +924,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		_myLabel.set(theLabel);
 		return me;
 	}
+
 
 	/**
 	 * @return boolean
@@ -855,6 +938,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return isVisible;
 	}
 
+
 	/**
 	 * @param theFlag boolean
 	 * @return ControllerGroup
@@ -864,15 +948,18 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	public T hide() {
 		isVisible = false;
 		return me;
 	}
 
+
 	public T show() {
 		isVisible = true;
 		return me;
 	}
+
 
 	/**
 	 * set the moveable status of the group, when false, the group can't be moved.
@@ -885,14 +972,17 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	public boolean isMoveable() {
 		return isMoveable;
 	}
+
 
 	public T setOpen(boolean theFlag) {
 		isOpen = theFlag;
 		return me;
 	}
+
 
 	/**
 	 * @return boolean
@@ -901,23 +991,95 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return isOpen;
 	}
 
+
 	public T open() {
 		setOpen(true);
 		return me;
 	}
+
 
 	public T close() {
 		setOpen(false);
 		return me;
 	}
 
+
+	/**
+	 * TODO redesign or deprecate remove the close button.
+	 */
+	@ControlP5.Invisible public T removeCloseButton() {
+		if (_myCloseButton == null) {
+			_myCloseButton.remove();
+		}
+		_myCloseButton = null;
+		return me;
+	}
+
+
+	public T setTitle(String theTitle) {
+		getCaptionLabel().set(theTitle);
+		return me;
+	}
+
+
+	public T hideBar() {
+		isBarVisible = false;
+		return me;
+	}
+
+
+	public T showBar() {
+		isBarVisible = true;
+		return me;
+	}
+
+
+	/**
+	 * @return boolean
+	 */
+	public boolean isBarVisible() {
+		return isBarVisible;
+	}
+
+
+	/**
+	 * @return ControlGroup
+	 */
+	public T hideArrow() {
+		isArrowVisible = false;
+		return me;
+	}
+
+
+	/**
+	 * @return ControlGroup
+	 */
+	public T showArrow() {
+		isArrowVisible = true;
+		return me;
+	}
+
+
+	/**
+	 * TODO redesign or deprecate add a close button to the controlbar of this controlGroup.
+	 */
+	@ControlP5.Invisible public T addCloseButton() {
+		if (_myCloseButton == null) {
+			_myCloseButton = new Button(cp5, this, getName() + "close", 1, _myWidth + 1, -10, 12, 9);
+			_myCloseButton.setCaptionLabel("X");
+			_myCloseButton.addListener(this);
+		}
+		return me;
+	}
+
+
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@ControlP5.Invisible
-	public int getPickingColor() {
+	@ControlP5.Invisible public int getPickingColor() {
 		return _myPickingColor;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -925,6 +1087,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 	public CColor getColor() {
 		return color;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -934,6 +1097,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -941,12 +1105,14 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return _myValue;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
 	public String getStringValue() {
 		return _myStringValue;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -956,12 +1122,42 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
 	public float[] getArrayValue() {
 		return _myArrayValue;
 	}
+
+
+	/**
+	 * @param theIndex
+	 * @return float
+	 */
+	public float getArrayValue(int theIndex) {
+		if (theIndex >= 0 && theIndex < _myArrayValue.length) {
+			return _myArrayValue[theIndex];
+		}
+		else {
+			return Float.NaN;
+		}
+	}
+
+
+	/**
+	 * 
+	 * @param theIndex
+	 * @param theValue
+	 * @return Controller
+	 */
+	public T setArrayValue(int theIndex, float theValue) {
+		if (theIndex >= 0 && theIndex < _myArrayValue.length) {
+			_myArrayValue[theIndex] = theValue;
+		}
+		return me;
+	}
+
 
 	/**
 	 * @param theArray
@@ -972,17 +1168,27 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	public Controller<?> getController(String theController) {
 		return cp5.getController(theController);
 	}
+
+
+	public T setCaptionLabel(String theValue) {
+		getCaptionLabel().set(theValue);
+		return me;
+	}
+
 
 	public Label getCaptionLabel() {
 		return _myLabel;
 	}
 
+
 	public Label getValueLabel() {
 		return _myValueLabel;
 	}
+
 
 	/**
 	 * @return ControllerGroup
@@ -992,6 +1198,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * @return ControllerGroup
 	 */
@@ -1000,9 +1207,11 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	public boolean isCollapse() {
 		return isCollapse;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -1011,12 +1220,14 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return _myWidth;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
 	public int getHeight() {
 		return _myHeight;
 	}
+
 
 	/**
 	 * @param theWidth
@@ -1027,6 +1238,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * @param theHeight
 	 * @return ControllerGroup
@@ -1036,10 +1248,19 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
-	protected boolean inside() {
-		return (_myControlWindow.mouseX > position.x + _myParent.absolutePosition.x && _myControlWindow.mouseX < position.x + _myParent.absolutePosition.x + _myWidth
-				&& _myControlWindow.mouseY > position.y + _myParent.absolutePosition.y - _myHeight && _myControlWindow.mouseY < position.y + _myParent.absolutePosition.y);
+
+	public T setSize(int theWidth, int theHeight) {
+		setWidth(theWidth);
+		// setHeight(theHeight) will set the Height of the bar therefore will not be used here.
+		return me;
 	}
+
+
+	protected boolean inside() {
+		return (cp5.getWindow().mouseX > position.x + _myParent.absolutePosition.x && cp5.getWindow().mouseX < position.x + _myParent.absolutePosition.x + _myWidth
+				&& cp5.getWindow().mouseY > position.y + _myParent.absolutePosition.y - _myHeight && cp5.getWindow().mouseY < position.y + _myParent.absolutePosition.y);
+	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -1048,12 +1269,14 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return cp5.getProperties().getProperty(this, thePropertyName);
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
 	public ControllerProperty getProperty(String theSetter, String theGetter) {
 		return cp5.getProperties().getProperty(this, theSetter, theGetter);
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -1063,6 +1286,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -1070,6 +1294,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		cp5.getProperties().register(this, theSetter, theGetter);
 		return me;
 	}
+
 
 	/**
 	 * {@inheritDoc}
@@ -1079,6 +1304,7 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -1087,113 +1313,147 @@ public abstract class ControllerGroup<T> implements ControllerInterface<T>, Cont
 		return me;
 	}
 
-	@Override
-	public String toString() {
+
+	public void controlEvent(ControlEvent theEvent) {
+	}
+
+
+	/**
+	 * @see controlP5.ControlListener
+	 * @param theListener ControlListener
+	 * @return Controller
+	 */
+	public T addListener(final ControlListener theListener) {
+		_myControlListener.add(theListener);
+		return me;
+	}
+
+
+	/**
+	 * @see controlP5.ControlListener
+	 * @param theListener ControlListener
+	 * @return Controller
+	 */
+	public T removeListener(final ControlListener theListener) {
+		_myControlListener.remove(theListener);
+		return me;
+	}
+
+
+	/**
+	 * @return int
+	 */
+	public int listenerSize() {
+		return _myControlListener.size();
+	}
+
+
+	@Override public String toString() {
 		return getName() + " [" + getClass().getSimpleName() + "]";
 	}
 
+
 	public String getInfo() {
-		return "type:\tControllerGroup" + "\nname:\t" + _myName + "\n" + "label:\t" + _myLabel.getText() + "\n" + "id:\t" + _myId + "\n" + "value:\t" + _myValue + "\n"
-				+ "arrayvalue:\t" + ControlP5IOHandler.arrayToString(_myArrayValue) + "\n" + "position:\t" + position + "\n" + "absolute:\t" + absolutePosition + "\n" + "width:\t"
-				+ getWidth() + "\n" + "height:\t" + getHeight() + "\n" + "color:\t" + getColor() + "\n" + "visible:\t" + isVisible + "\n" + "moveable:\t" + isMoveable + "\n";
+		return "type:\tControllerGroup" + "\nname:\t" + _myName + "\n" + "label:\t" + _myLabel.getText() + "\n" + "id:\t" + _myId + "\n" + "value:\t" + _myValue + "\n" + "arrayvalue:\t"
+				+ CP.arrayToString(_myArrayValue) + "\n" + "position:\t" + position + "\n" + "absolute:\t" + absolutePosition + "\n" + "width:\t" + getWidth() + "\n" + "height:\t" + getHeight()
+				+ "\n" + "color:\t" + getColor() + "\n" + "visible:\t" + isVisible + "\n" + "moveable:\t" + isMoveable + "\n";
 	}
+
 
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public PVector absolutePosition() {
+	@Deprecated public PVector absolutePosition() {
 		return getAbsolutePosition();
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public PVector position() {
+	@Deprecated public PVector position() {
 		return getPosition();
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public CColor color() {
+	@Deprecated public CColor color() {
 		return color;
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public float value() {
+	@Deprecated public float value() {
 		return _myValue;
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public String stringValue() {
+	@Deprecated public String stringValue() {
 		return getStringValue();
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public float[] arrayValue() {
+	@Deprecated public float[] arrayValue() {
 		return getArrayValue();
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public String name() {
+	@Deprecated public String name() {
 		return _myName;
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public int id() {
+	@Deprecated public int id() {
 		return _myId;
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@Deprecated
-	public Controller<?> controller(String theController) {
+	@Deprecated public Controller<?> controller(String theController) {
 		return cp5.getController(theController);
 	}
 
+
 	/**
 	 * @exclude
 	 */
-	@ControlP5.Invisible
-	@Deprecated
-	public ControllerInterface<?> parent() {
+	@ControlP5.Invisible @Deprecated public ControllerInterface<?> parent() {
 		return _myParent;
 	}
 
-	/**
-	 * @exclude
-	 * @deprecated
-	 */
-	@Deprecated
-	public Label captionLabel() {
-		return _myLabel;
-	}
 
 	/**
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public Label valueLabel() {
+	@Deprecated public Label captionLabel() {
+		return _myLabel;
+	}
+
+
+	/**
+	 * @exclude
+	 * @deprecated
+	 */
+	@Deprecated public Label valueLabel() {
 		return _myValueLabel;
 	}
 

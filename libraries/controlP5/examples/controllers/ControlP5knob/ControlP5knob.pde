@@ -33,7 +33,7 @@ void setup() {
                .setValue(50)
                .setPosition(100,70)
                .setRadius(50)
-               .setViewStyle(Knob.ARC)
+               .setDragDirection(Knob.VERTICAL)
                ;
                      
   myKnobB = cp5.addKnob("knobValue")
@@ -47,6 +47,7 @@ void setup() {
                .setColorForeground(color(255))
                .setColorBackground(color(0, 160, 100))
                .setColorActive(color(255,255,0))
+               .setDragDirection(Knob.HORIZONTAL)
                ;
 }
 

@@ -1,3 +1,208 @@
+2012-12-23  Andreas Schlegel  <andi at sojamo.de>
+
+      * version 2.0.4
+	
+      * src controlP5.Textfield.java,controlP5.ListBox.java,
+      controlP5.DropdownList.java,controlP5.ControlWindow.java
+      controlP5.ControlP5Base.java:
+      adjusting to processing's KeyEvent final variable name changes     
+      see issue 69 https://code.google.com/p/controlp5/issues/detail?id=69 (thanks jeff)      
+      
+      * src controlP5.Textfield.java:
+      reimplemented password mode (thanks jeff)
+      
+       
+
+2012-10-19  Andreas Schlegel  <andi at sojamo.de>
+
+      * version 2.0.3
+	
+      * src controlP5.Controller.java:
+      Automatic (PApplet) field recognition for Slider, Knob, Numberbox, Toggle adjusted.    
+      
+      
+2012-09-17  Andreas Schlegel  <andi at sojamo.de>
+
+      * version 2.0.2
+      
+      * major changes to controlP5's font handling. the BitFontRenderer has been removed and the BitFont class
+      has been introduced. BitFont extends PFont and is the replacement for rendering controlP5's bitfont as
+      a pfont. this makes font handling way more easier and stable. if this has caused any font rendering 
+      flaws, let me know. 
+      
+      * src controlP5.BitFontRenderer.java:
+      removed
+      
+      * src controlP5.BitFont.java:
+      added, see above.      
+             
+      
+
+2012-09-07  Andreas Schlegel  <andi at sojamo.de>
+
+      * version 2.0.1
+      
+      * processing 2.0, time to make some changes, major revision in progress.
+      The goal should be to make 2.0+ desktop and android compatible, for that java.awt dependencies 
+      will be removed. 
+      starting to remove deprecated methods, fields and classes
+      
+      * removing all java.awt dependencies.
+      with each ControlP5 instance there will only be 1 ControlWindow since separate windows/frames have
+      been removed due to their java.awt dependency. There will be an example of how to make your own 
+      separate Frame when in desktop mode. 
+      
+      * versions starting with 2.0.1 will not be backwards compatible with 1.5.1 and earlier
+      from this version onwards Android is supported
+      
+      
+      * src controlP5.Println.java:
+      new class added
+      a console logger that captures the System.out stream and displays it using a Textarea
+      
+      
+      * src controlP5.FrameRate.java:
+      new class added
+      a Textlabel that displays the current or average framerate based on update interval 
+      
+      
+      * src controlP5.BitFontRenderer.java:
+      using Base64 encoded bitfont source instead of loading gif textures
+      
+      
+      * src controlP5.Knob.java:
+      adding value label, ARC is default view now.
+      
+      
+      * src controlP5.Matrix.java:
+      adding play(), pause(), stop(), isPlaying(), trigger(int)
+  
+  
+      * src controlP5.Controller.java:
+      all ControllerSprite references (previously deprecated) have been removed
+      
+      
+      * src controlP5.ControllerSprite.java:
+      removed
+		
+      
+      * src controlP5.ControlP5IOHandler.java:
+      obsolete, removed, all static method transfered to controlP5.CP.java which will handle static method
+  
+      
+      * src controlP5.ControlWindowKeyListener.java:
+      obsolete, removed
+  
+      
+      * src controlP5.PAppletWindow.java:
+      obsolete, removed, currently there is no support for separate frames other than the main window due to removing java.awt dependencies
+
+
+      * src controlP5.ControlWindow.java:
+			removed mouseWheelMoved(MouseWheelEvent e) due to removal of java.awt dependencies
+			how to use an extra window, see example extra/ControlP5frame
+
+			
+			* src controlP5.ControlWindowKeyHandler.java:
+			obsolete, removed, now handled by controlP5/ControlWindow.java
+
+			
+			* src controlP5.CRect.java:
+      obsolete, removed, was only used by MultiList and MultiListButton - replaced with int array.
+
+			       
+			* src controlP5.ControlCanvas.java:
+      obsolete, removed, use controlP5.Canvas.java instead.
+
+
+2012-09-07  Andreas Schlegel  <andi at sojamo.de>
+
+      * version 1.5.1
+
+      * This version will be the last version that is stable and fully compatible with processing 1.5.1
+      due to major changes in the processing 2.0 version, future releases of controlp5 will only be 
+      compatible with the processing 2.0 and higher versions.
+      The next controlp5 release will continue with version 2.0.1
+
+
+
+2012-08-25  Andreas Schlegel  <andi at sojamo.de>
+
+      * version 0.7.6
+
+      * src controlP5.Textfield.java:
+      fixing special character issue with e.g. ã,é,ç,Ç, etc.
+      backspace, left arrow, right arrow now respond when pressed longer
+      added isFocus()
+      implemented issue 56 http://code.google.com/p/controlp5/issues/detail?id=56 , thanks jeff
+      
+      * src controlP5.ControllerAutomator.java:
+      fixed annotation mapping for methods
+      added list support for methods
+            
+      * src controlP5.CColor.java:
+      removing alpha masking
+      
+      * src controlP5.MultiList.java:
+      Conflict with moving a Multilist from one to another tab
+      removed field _myChildren. MultiListButtons are now store in the Controller's sublements filed.
+      
+      * src controlP5.ControllerInterface.java:      
+      adding getArrayValue(int), setArrayValue(int, float), setArrayValue(float[]);
+      
+      * src controlP5.ControlP5.java:
+      adding setBroadcast(boolean) to disable/enable broadcasting of value changes.
+	
+	
+	
+2012-05-30  Andreas Schlegel  <andi at sojamo.de>
+
+      * version 0.7.5
+      
+      * src controlP5.Controller.java:
+      adding empty methods onPress(), onClick(), onRelease(), onReleaseOutside(), 
+      onScroll(int),onMove(),onDrag() for input access when extending a controller.
+      
+      * adding convenience constructor to Controllers, convenient when extending a Controller.
+      
+      * adding example use/ControlP5extendController
+      
+      
+       
+2012-05-18  Andreas Schlegel  <andi at sojamo.de>
+
+      * version 0.7.3
+      
+      * src controlP5.ControlEvent.java:
+      adding getArrayValue(int), returns a float value for a given index, does not check for ArrayIndexOutOfBounds
+     
+      * src controlP5.Slider.java:
+      issue 47 http://code.google.com/p/controlp5/issues/detail?id=47 fixed
+      
+      * src controlP5.CheckBox.java, controlP5.RadioButton.java:
+      issue 41 http://code.google.com/p/controlp5/issues/detail?id=41 fixed
+      
+      * src controlP5.Chart.java:      
+      implemented
+      
+      * src controlP5.ControlFont.java:      
+      issue 46 http://code.google.com/p/controlp5/issues/detail?id=46 fixed
+      
+      * src controlP5.ControlWindow.java:      
+      sketches using controlP5 running in the browser as Applet did not work anymore, fixed
+
+      * src controlP5.ColorPicker.java:      
+      missing implementation reported in http://forum.processing.org/topic/controlp5-how-to-receive-colorpicker-controlevents fixed
+      ColorPicker example has been modified accordingly 
+      
+      * src controlP5.Textfield.java:
+      issue 44 http://code.google.com/p/controlp5/issues/detail?id=44 fixed
+      
+      * src controlP5.ControlWindowKeyHandler.java:
+      issue 49 http://code.google.com/p/controlp5/issues/detail?id=49 fixed, keys boolean array size increased to 525 due to windows key issue
+            
+      
+
 2012-01-15  Andreas Schlegel  <andi at sojamo.de>
 
       * version 0.7.0

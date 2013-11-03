@@ -3,8 +3,8 @@ package controlP5;
 import processing.core.PApplet;
 
 /**
- * The Slider2D allows to control a handle within a 2D area. This controller
- * returns an arrayValue with the current xy position of its handle.
+ * The Slider2D allows to control a handle within a 2D area. This controller returns an arrayValue with the current xy position of its
+ * handle.
  * 
  * @author andreas schlegel
  * 
@@ -25,6 +25,18 @@ public class Slider2D extends Controller<Slider2D> {
 
 	private String _myValueLabelSeparator = ",";
 
+	/**
+	 * Convenience constructor to extend Slider2D.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public Slider2D(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0, 99, 9);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
+
 	protected Slider2D(ControlP5 theControlP5, ControllerGroup<?> theParent, String theName, int theX, int theY, int theWidth, int theHeight) {
 		super(theControlP5, theParent, theName, theX, theY, theWidth, theHeight);
 		_myArrayValue = new float[] { 0.0f, 0.0f };
@@ -32,8 +44,8 @@ public class Slider2D extends Controller<Slider2D> {
 		_myMinY = 0;
 		_myMaxX = theWidth;
 		_myMaxY = theHeight;
-		getCaptionLabel().setPadding(0,Label.paddingY).align(LEFT, BOTTOM_OUTSIDE);
-		getValueLabel().setPadding(0,Label.paddingY).align(RIGHT, BOTTOM_OUTSIDE);
+		getCaptionLabel().setPadding(0, Label.paddingY).align(LEFT, BOTTOM_OUTSIDE);
+		getValueLabel().setPadding(0, Label.paddingY).align(RIGHT, BOTTOM_OUTSIDE);
 	}
 
 	/*
@@ -41,10 +53,9 @@ public class Slider2D extends Controller<Slider2D> {
 	 * 
 	 * @see controlP5.Controller#updateInternalEvents(processing.core.PApplet)
 	 */
-	@ControlP5.Invisible
-	public Slider2D updateInternalEvents(PApplet theApplet) {
+	@ControlP5.Invisible public Slider2D updateInternalEvents(PApplet theApplet) {
 		if (isInside()) {
-			if (!cp5.keyHandler.isAltDown) {
+			if (!cp5.isAltDown()) {
 				float tX = PApplet.constrain(_myControlWindow.mouseX - (_myParent.getAbsolutePosition().x + position.x), 0, width - cursorWidth);
 				float tY = PApplet.constrain(_myControlWindow.mouseY - (_myParent.getAbsolutePosition().y + position.y), 0, height - cursorHeight);
 				if (isMousePressed) {
@@ -137,13 +148,22 @@ public class Slider2D extends Controller<Slider2D> {
 		return cursorHeight;
 	}
 
+	public Slider2D disableCrosshair() {
+		isCrosshairs = false;
+		return this;
+	}
+
+	public Slider2D enableCrosshair() {
+		isCrosshairs = false;
+		return this;
+	}
+
 	/*
-	 * (non-Javadoc)
+	 * (non-Javadoc) TODO see https://forum.processing.org/topic/controlp5-slider2d-questions
 	 * 
 	 * @see controlP5.Controller#setArrayValue(float[])
 	 */
-	@Override
-	public Slider2D setArrayValue(float[] theArray) {
+	@Override public Slider2D setArrayValue(float[] theArray) {
 		_myArrayValue = theArray;
 		float rX = (width - cursorWidth) / (float) (_myMaxX - _myMinX);
 		float rY = (height - cursorHeight) / (float) (_myMaxY - _myMinY);
@@ -185,13 +205,11 @@ public class Slider2D extends Controller<Slider2D> {
 	public void setValueLabelSeparator(String theSeparator) {
 		_myValueLabelSeparator = theSeparator;
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	@ControlP5.Invisible
-	public Slider2D updateDisplayMode(int theMode) {
+	@Override @ControlP5.Invisible public Slider2D updateDisplayMode(int theMode) {
 		_myDisplayMode = theMode;
 		switch (theMode) {
 		case (DEFAULT):
@@ -210,6 +228,8 @@ public class Slider2D extends Controller<Slider2D> {
 
 		public void display(PApplet theApplet, Slider2D theController) {
 
+			theApplet.noStroke();
+
 			if (theController.isInside()) {
 				theApplet.fill(theController.getColor().getForeground());
 			} else {
@@ -220,20 +240,19 @@ public class Slider2D extends Controller<Slider2D> {
 
 			if (isCrosshairs) {
 				if (theController.isInside()) {
-					theApplet.stroke(theController.getColor().getBackground());
+					theApplet.fill(theController.getColor().getBackground());
 				} else {
-					theApplet.stroke(theController.getColor().getForeground());
+					theApplet.fill(theController.getColor().getForeground());
 				}
-				theApplet.line(0, getCursorY(), getWidth(), getCursorY());
-				theApplet.line(getCursorX(), 0, getCursorX(), getHeight());
-				theApplet.noStroke();
+				theApplet.rect(0, (int) (getCursorY() + getCursorHeight() / 2), (int) getWidth(), 1);
+				theApplet.rect((int) (getCursorX() + getCursorWidth() / 2), 0, 1, (int) getHeight());
 			}
 
 			theApplet.fill(theController.getColor().getActive());
-			theApplet.rect(getCursorX(), getCursorY(), getCursorWidth(), getCursorHeight());
+			theApplet.rect((int) getCursorX(), (int) getCursorY(), (int) getCursorWidth(), (int) getCursorHeight());
 
 			getCaptionLabel().draw(theApplet, 0, 0, theController);
-			getValueLabel().draw(theApplet, 0,0, theController);
+			getValueLabel().draw(theApplet, 0, 0, theController);
 		}
 
 	}

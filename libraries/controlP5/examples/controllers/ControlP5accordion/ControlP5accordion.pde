@@ -3,7 +3,12 @@
  * arrange controller groups in an accordion like style.
  *
  * find a list of public methods available for the Accordion Controller 
- * at the bottom of this sketch.
+ * at the bottom of this sketch. In the example below 3 groups with controllers
+ * are created and added to an accordion controller. Furthermore several key 
+ * combinations are mapped to control individual settings of the accordion.
+ * An accordion comes in 2 modes, Accordion.SINGLE and Accordion.MULTI where the 
+ * latter allows to open multiple groups of an accordion and the SINGLE mode only
+ * allows 1 group to be opened at a time.  
  *
  * by Andreas Schlegel, 2012
  * www.sojamo.de/libraries/controlp5
@@ -100,15 +105,23 @@ void gui() {
                  .addItem(g3)
                  ;
                  
-  cp5.mapKey(new ControlKey() {public void keyEvent() {accordion.open(0,1,2);}}, 'o');
-  cp5.mapKey(new ControlKey() {public void keyEvent() {accordion.close(0,1,2);}}, 'c');
-  cp5.mapKey(new ControlKey() {public void keyEvent() {accordion.setWidth(300);}}, '1');
-  cp5.mapKey(new ControlKey() {public void keyEvent() {accordion.setPosition(0,0);accordion.setItemHeight(190);}}, '2'); 
-  cp5.mapKey(new ControlKey() {public void keyEvent() {accordion.setCollapseMode(ControlP5.ALL);}}, '3');
-  cp5.mapKey(new ControlKey() {public void keyEvent() {accordion.setCollapseMode(ControlP5.SINGLE);}}, '4');
-  cp5.mapKey(new ControlKey() {public void keyEvent() {cp5.remove("myGroup1");}}, '0');
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.open(0,1,2);}}, 'o');
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.close(0,1,2);}}, 'c');
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.setWidth(300);}}, '1');
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.setPosition(0,0);accordion.setItemHeight(190);}}, '2'); 
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.setCollapseMode(ControlP5.ALL);}}, '3');
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.setCollapseMode(ControlP5.SINGLE);}}, '4');
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {cp5.remove("myGroup1");}}, '0');
   
-  {{accordion.open(0,1,2);}};
+  accordion.open(0,1,2);
+  
+  // use Accordion.MULTI to allow multiple group 
+  // to be open at a time.
+  accordion.setCollapseMode(Accordion.MULTI);
+  
+  // when in SINGLE mode, only 1 accordion  
+  // group can be open at a time.  
+  // accordion.setCollapseMode(Accordion.SINGLE);
 }
   
 

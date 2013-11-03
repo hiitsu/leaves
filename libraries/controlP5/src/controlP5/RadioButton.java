@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -68,11 +68,31 @@ public class RadioButton extends ControlGroup<RadioButton> {
 	protected PImage[] images = new PImage[3];
 
 	protected boolean noneSelectedAllowed = true;
-	
+
 	private Object _myPlug;
-	
+
 	private String _myPlugName;
+
+	protected int alignX = RIGHT_OUTSIDE;
+
+	protected int alignY = CENTER;
 	
+	protected int _myPaddingX = Label.paddingX;
+
+	protected int _myPaddingY = 0;
+
+	/**
+	 * Convenience constructor to extend RadioButton.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public RadioButton(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
+
 	/**
 	 * @exclude
 	 * @param theControlP5
@@ -89,6 +109,9 @@ public class RadioButton extends ControlGroup<RadioButton> {
 		setItemsPerRow(1);
 		_myPlug = cp5.papplet;
 		_myPlugName = getName();
+		if (!ControllerPlug.checkPlug(_myPlug, _myPlugName, new Class[] { int.class })) {
+			_myPlug = null;
+		}
 	}
 
 	/**
@@ -98,7 +121,7 @@ public class RadioButton extends ControlGroup<RadioButton> {
 	 */
 	public RadioButton addItem(final String theName, final float theValue) {
 		Toggle t = cp5.addToggle(theName, 0, 0, itemWidth, itemHeight);
-		t.getCaptionLabel().align(RIGHT_OUTSIDE, CENTER).setPadding(Label.paddingX, 0);
+		t.getCaptionLabel().align(alignX, alignY).setPadding(_myPaddingX, _myPaddingY);
 		t.setMode(ControlP5.DEFAULT);
 		t.setImages(images[0], images[1], images[2]);
 		t.setSize(images[0]);
@@ -137,6 +160,44 @@ public class RadioButton extends ControlGroup<RadioButton> {
 			}
 		}
 		updateValues(false);
+		return this;
+	}
+
+	private void updateAlign() {
+		for (Toggle t : _myRadioToggles) {
+			t.getCaptionLabel().align(alignX, alignY);
+		}
+	}
+
+	public RadioButton align(int[] a) {
+		return align(a[0], a[1]);
+	}
+
+	public RadioButton align(int theX, int theY) {
+		alignX = theX;
+		alignY = theY;
+		updateAlign();
+		return this;
+	}
+
+	public RadioButton alignX(int theX) {
+		return align(theX, alignY);
+	}
+
+	public RadioButton alignY(int theY) {
+		return align(alignX, theY);
+	}
+
+	public int[] getAlign() {
+		return new int[] { alignX, alignY };
+	}
+
+	public RadioButton setLabelPadding(int thePaddingX, int thePaddingY) {
+		_myPaddingX = thePaddingX;
+		_myPaddingY = thePaddingY;
+		for (Toggle t : _myRadioToggles) {
+			t.getCaptionLabel().setPadding(thePaddingX, thePaddingY);
+		}
 		return this;
 	}
 
@@ -229,20 +290,19 @@ public class RadioButton extends ControlGroup<RadioButton> {
 	public Toggle getItem(int theIndex) {
 		return _myRadioToggles.get(theIndex);
 	}
-	
+
 	public Toggle getItem(String theName) {
-		for (Toggle t: _myRadioToggles) {
+		for (Toggle t : _myRadioToggles) {
 			if (theName.equals(t.getName())) {
 				return t;
 			}
 		}
 		return null;
 	}
-	
+
 	public List<Toggle> getItems() {
 		return _myRadioToggles;
 	}
-
 
 	/**
 	 * Gets the state of an item - this can be true (for on) or false (for off) - by index.
@@ -446,9 +506,7 @@ public class RadioButton extends ControlGroup<RadioButton> {
 	 * 
 	 * @exclude
 	 */
-	@ControlP5.Invisible
-	@Override
-	public void controlEvent(ControlEvent theEvent) {
+	@ControlP5.Invisible @Override public void controlEvent(ControlEvent theEvent) {
 		if (!isMultipleChoice) {
 			if (noneSelectedAllowed == false && theEvent.getController().getValue() < 1) {
 				if (theEvent.getController() instanceof Toggle) {
@@ -473,37 +531,42 @@ public class RadioButton extends ControlGroup<RadioButton> {
 				}
 			}
 		}
-		try {
-            Method method = _myPlug.getClass().getMethod(_myPlugName,int.class);
-            method.setAccessible(true);
-            method.invoke(_myPlug, (int)_myValue);
-        } catch (SecurityException ex) {
-            ex.printStackTrace();
-        } catch (NoSuchMethodException ex) {
-            ex.printStackTrace();
-        } catch (IllegalArgumentException ex) {
-            ex.printStackTrace();
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
-        } catch (InvocationTargetException ex) {
-            ex.printStackTrace();
-        }
+		if (_myPlug != null) {
+			try {
+				Method method = _myPlug.getClass().getMethod(_myPlugName, int.class);
+				method.invoke(_myPlug, (int) _myValue);
+			} catch (SecurityException ex) {
+				ex.printStackTrace();
+			} catch (NoSuchMethodException ex) {
+				ex.printStackTrace();
+			} catch (IllegalArgumentException ex) {
+				ex.printStackTrace();
+			} catch (IllegalAccessException ex) {
+				ex.printStackTrace();
+			} catch (InvocationTargetException ex) {
+				ex.printStackTrace();
+			}
+		}
 		updateValues(true);
 	}
 
-	
 	public RadioButton plugTo(Object theObject) {
 		_myPlug = theObject;
-		return this;
-	}
-	
-	public RadioButton plugTo(Object theObject,String thePlugName) {
-		_myPlug = theObject;
-		_myPlugName = thePlugName;
+		if (!ControllerPlug.checkPlug(_myPlug, _myPlugName, new Class[] { int.class })) {
+			_myPlug = null;
+		}
 		return this;
 	}
 
-	
+	public RadioButton plugTo(Object theObject, String thePlugName) {
+		_myPlug = theObject;
+		_myPlugName = thePlugName;
+		if (!ControllerPlug.checkPlug(_myPlug, _myPlugName, new Class[] { int.class })) {
+			_myPlug = null;
+		}
+		return this;
+	}
+
 	protected void updateValues(boolean theBroadcastFlag) {
 		int n = _myRadioToggles.size();
 		_myArrayValue = new float[n];
@@ -515,7 +578,7 @@ public class RadioButton extends ControlGroup<RadioButton> {
 			ControlEvent myEvent = new ControlEvent(this);
 			cp5.getControlBroadcaster().broadcast(myEvent, ControlP5Constants.FLOAT);
 		}
-		
+
 	}
 
 	/**
@@ -533,8 +596,7 @@ public class RadioButton extends ControlGroup<RadioButton> {
 	 * Sets the value for all RadioButton items according to the values of the array passed on. 0
 	 * will turn off an item, any other value will turn it on.
 	 */
-	@Override
-	public RadioButton setArrayValue(float[] theArray) {
+	@Override public RadioButton setArrayValue(float[] theArray) {
 		for (int i = 0; i < theArray.length; i++) {
 			if (_myArrayValue[i] != theArray[i]) {
 				if (theArray[i] == 0) {
@@ -561,14 +623,14 @@ public class RadioButton extends ControlGroup<RadioButton> {
 		}
 		return this;
 	}
-	
+
 	public RadioButton showLabels() {
 		for (Toggle t : _myRadioToggles) {
 			t.getCaptionLabel().setVisible(true);
 		}
 		return this;
 	}
-	
+
 	public RadioButton toUpperCase(boolean theValue) {
 		for (Toggle t : _myRadioToggles) {
 			t.getCaptionLabel().toUpperCase(theValue);
@@ -579,8 +641,7 @@ public class RadioButton extends ControlGroup<RadioButton> {
 	/**
 	 * @exclude {@inheritDoc}
 	 */
-	@Override
-	public String getInfo() {
+	@Override public String getInfo() {
 		return "type:\tRadioButton\n" + super.getInfo();
 	}
 
@@ -588,8 +649,7 @@ public class RadioButton extends ControlGroup<RadioButton> {
 	 * @deprecated
 	 * @exclude
 	 */
-	@Deprecated
-	public RadioButton add(final String theName, final float theValue) {
+	@Deprecated public RadioButton add(final String theName, final float theValue) {
 		return addItem(theName, theValue);
 	}
 }

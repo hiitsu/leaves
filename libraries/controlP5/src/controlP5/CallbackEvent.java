@@ -1,3 +1,4 @@
+
 package controlP5;
 
 /**
@@ -20,8 +21,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -38,10 +39,12 @@ public class CallbackEvent {
 
 	private final Controller<?> _myController;
 
+
 	CallbackEvent(Controller<?> theController, int theAction) {
 		_myController = theController;
 		_myAction = theAction;
 	}
+
 
 	/**
 	 * 
@@ -53,6 +56,7 @@ public class CallbackEvent {
 	public int getAction() {
 		return _myAction;
 	}
+
 
 	/**
 	 * Returns the Controller that triggered the Callback Event.

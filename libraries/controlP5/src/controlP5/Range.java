@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -94,9 +94,21 @@ public class Range extends Controller<Range> {
 
 	public int alignValueLabel = CENTER;
 
-	private int _myColorTickMark = 0xffffffff;
+	protected int _myColorTickMark = 0xffffffff;
 
 	private int mode = -1;
+
+	/**
+	 * Convenience constructor to extend Range.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public Range(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 100, 0, 100, 0, 0, 99, 9);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
 
 	/**
 	 * 
@@ -111,8 +123,7 @@ public class Range extends Controller<Range> {
 	 * @param theWidth int
 	 * @param theHeight int
 	 */
-	@ControlP5.Invisible
-	public Range(ControlP5 theControlP5, ControllerGroup<?> theParent, String theName, float theMin, float theMax, float theDefaultMinValue, float theDefaultMaxValue, int theX, int theY, int theWidth, int theHeight) {
+	@ControlP5.Invisible public Range(ControlP5 theControlP5, ControllerGroup<?> theParent, String theName, float theMin, float theMax, float theDefaultMinValue, float theDefaultMaxValue, int theX, int theY, int theWidth, int theHeight) {
 		super(theControlP5, theParent, theName, theX, theY, theWidth, theHeight);
 
 		_myArrayValue = new float[] { theDefaultMinValue, theDefaultMaxValue };
@@ -121,8 +132,8 @@ public class Range extends Controller<Range> {
 		_myMax = theMax;
 		_myValueRange = _myMax - _myMin;
 
-		minHandle = (int)PApplet.map(theDefaultMinValue, _myMin, _myMax, handleSize, getWidth() - handleSize);
-		maxHandle = (int)PApplet.map(theDefaultMaxValue, _myMin, _myMax, handleSize, getWidth() - handleSize);
+		minHandle = (int) PApplet.map(theDefaultMinValue, _myMin, _myMax, handleSize, getWidth() - handleSize);
+		maxHandle = (int) PApplet.map(theDefaultMaxValue, _myMin, _myMax, handleSize, getWidth() - handleSize);
 		mr = maxHandle - minHandle;
 
 		_myCaptionLabel = new Label(cp5, theName).setColor(color.getCaptionLabel()).align(RIGHT_OUTSIDE, CENTER);
@@ -137,15 +148,13 @@ public class Range extends Controller<Range> {
 
 	}
 
-	@Override
-	public Range setColorValueLabel(int theColor) {
+	@Override public Range setColorValueLabel(int theColor) {
 		_myValueLabel.setColor(theColor);
 		_myHighValueLabel.setColor(theColor);
 		return this;
 	}
-	
-	@Override
-	public Range setColorCaptionLabel(int theColor) {
+
+	@Override public Range setColorCaptionLabel(int theColor) {
 		_myCaptionLabel.setColor(theColor);
 		return this;
 	}
@@ -160,8 +169,7 @@ public class Range extends Controller<Range> {
 		return this;
 	}
 
-	@ControlP5.Invisible
-	public Range setSliderMode(int theMode) {
+	@ControlP5.Invisible public Range setSliderMode(int theMode) {
 		return this;
 	}
 
@@ -173,14 +181,13 @@ public class Range extends Controller<Range> {
 		return this;
 	}
 
-	@ControlP5.Invisible
-	public Range updateInternalEvents(PApplet theApplet) {
+	@ControlP5.Invisible public Range updateInternalEvents(PApplet theApplet) {
 		if (isVisible) {
 			int c = _myControlWindow.mouseX - _myControlWindow.pmouseX;
 			if (c == 0) {
 				return this;
 			}
-			if (isMousePressed && !cp5.keyHandler.isAltDown) {
+			if (isMousePressed && !cp5.isAltDown()) {
 				switch (mode) {
 				case (LEFT):
 					minHandle = PApplet.max(handleSize, PApplet.min(maxHandle, minHandle + c));
@@ -199,10 +206,7 @@ public class Range extends Controller<Range> {
 		return this;
 	}
 
-	
-	@Override
-	@Invisible
-	public void mousePressed() {
+	@Override @Invisible public void mousePressed() {
 
 		final float posX = _myParent.getAbsolutePosition().x + position.x;
 		final float posY = _myParent.getAbsolutePosition().y + position.y;
@@ -228,8 +232,8 @@ public class Range extends Controller<Range> {
 	}
 
 	/**
-	 * set the value of the range-slider.
-	 * to set the low and high value, use setLowValue and setHighValue or setRangeValues
+	 * set the value of the range-slider. to set the low and high value, use setLowValue and
+	 * setHighValue or setRangeValues
 	 * 
 	 * @see #setLowValue(float)
 	 * @see #setHighValue(float)
@@ -238,9 +242,7 @@ public class Range extends Controller<Range> {
 	 * @param theValue float
 	 * @return Range
 	 */
-	@Override
-	@ControlP5.Invisible
-	public Range setValue(float theValue) {
+	@Override @ControlP5.Invisible public Range setValue(float theValue) {
 		_myValue = theValue;
 		broadcast(ARRAY);
 		return this;
@@ -249,9 +251,7 @@ public class Range extends Controller<Range> {
 	/**
 	 * @exclude
 	 */
-	@Override
-	@ControlP5.Invisible
-	public Range update() {
+	@Override @ControlP5.Invisible public Range update() {
 		_myArrayValue[0] = PApplet.map(minHandle, handleSize, getWidth() - handleSize, _myMin, _myMax);
 		_myArrayValue[1] = PApplet.map(maxHandle, handleSize, getWidth() - handleSize, _myMin, _myMax);
 		mr = maxHandle - minHandle;
@@ -260,8 +260,7 @@ public class Range extends Controller<Range> {
 		return setValue(_myValue);
 	}
 
-	@ControlP5.Invisible
-	public Range setDraggable(boolean theFlag) {
+	@ControlP5.Invisible public Range setDraggable(boolean theFlag) {
 		isDraggable = theFlag;
 		isDragging = (theFlag == false) ? false : isDragging;
 		return this;
@@ -271,24 +270,19 @@ public class Range extends Controller<Range> {
 		return _myArrayValue;
 	}
 
-	@Override
-	public Range setArrayValue(float[] theArray) {
+	@Override public Range setArrayValue(float[] theArray) {
 		setLowValue(theArray[0], false);
 		setHighValue(theArray[1], false);
 		return update();
 	}
 
-	
-	@Override
-	public Range setMin(float theValue) {
+	@Override public Range setMin(float theValue) {
 		_myMin = theValue;
 		_myValueRange = _myMax - _myMin;
 		return setLowValue(_myArrayValue[0]);
 	}
 
-	
-	@Override
-	public Range setMax(float theValue) {
+	@Override public Range setMax(float theValue) {
 		_myMax = theValue;
 		_myValueRange = _myMax - _myMin;
 		return setHighValue(_myArrayValue[1]);
@@ -302,35 +296,26 @@ public class Range extends Controller<Range> {
 		return _myArrayValue[1];
 	}
 
-	@Override
-	public Range setWidth(int theValue) {
+	@Override public Range setWidth(int theValue) {
 		width = theValue;
 		return this;
 	}
 
-	@Override
-	public Range setHeight(int theValue) {
+	@Override public Range setHeight(int theValue) {
 		height = theValue;
 		return this;
 	}
-	
-	@Override
-	@ControlP5.Invisible
-	public void mouseReleased() {
+
+	@Override @ControlP5.Invisible public void mouseReleased() {
 		isDragging = isMinHandle = isMaxHandle = isMoveHandle = false;
 		mode = -1;
 	}
-	
-	
-	@Override
-	@ControlP5.Invisible
-	public void mouseReleasedOutside() {
+
+	@Override @ControlP5.Invisible public void mouseReleasedOutside() {
 		mouseReleased();
 	}
-	
-	@Override
-	@ControlP5.Invisible
-	public void onLeave() {
+
+	@Override @ControlP5.Invisible public void onLeave() {
 		isMinHandle = false;
 		isMaxHandle = false;
 	}
@@ -355,8 +340,7 @@ public class Range extends Controller<Range> {
 		return this;
 	}
 
-	@ControlP5.Invisible
-	public TickMark getTickMark() {
+	@ControlP5.Invisible public TickMark getTickMark() {
 		System.out.println("Range Tickmarks not yet supported");
 		return null;
 	}
@@ -383,20 +367,20 @@ public class Range extends Controller<Range> {
 		setHighValue(_myArrayValue[1], false);
 		return update();
 	}
-	
+
 	public Range setRange(float theMinValue, float theMaxValue) {
 		setMin(theMinValue);
 		setMax(theMaxValue);
 		return this;
 	}
-	
+
 	public Range setRangeValues(float theLowValue, float theHighValue) {
-		return setArrayValue(new float[] {theLowValue, theHighValue});
+		return setArrayValue(new float[] { theLowValue, theHighValue });
 	}
-	
+
 	private Range setLowValue(float theValue, boolean isUpdate) {
 		_myArrayValue[0] = PApplet.max(_myMin, snapValue(theValue));
-		minHandle = (int)PApplet.map(_myArrayValue[0], _myMin, _myMax, handleSize, getWidth() - handleSize);
+		minHandle = (int) PApplet.map(_myArrayValue[0], _myMin, _myMax, handleSize, getWidth() - handleSize);
 		return (isUpdate) ? update() : this;
 	}
 
@@ -406,7 +390,7 @@ public class Range extends Controller<Range> {
 
 	private Range setHighValue(float theValue, boolean isUpdate) {
 		_myArrayValue[1] = PApplet.min(_myMax, snapValue(theValue));
-		maxHandle = (int)PApplet.map(_myArrayValue[1], _myMin, _myMax, handleSize, getWidth() - handleSize);
+		maxHandle = (int) PApplet.map(_myArrayValue[1], _myMin, _myMax, handleSize, getWidth() - handleSize);
 		return (isUpdate) ? update() : this;
 	}
 
@@ -426,9 +410,7 @@ public class Range extends Controller<Range> {
 		return theValue;
 	}
 
-	@Override
-	@ControlP5.Invisible
-	public Range updateDisplayMode(int theMode) {
+	@Override @ControlP5.Invisible public Range updateDisplayMode(int theMode) {
 		_myDisplayMode = theMode;
 		switch (theMode) {
 		case (DEFAULT):
@@ -454,7 +436,7 @@ public class Range extends Controller<Range> {
 	}
 
 	class RangeView implements ControllerView<Range> {
-		
+
 		public void display(PApplet theApplet, Range theController) {
 
 			int high = mode;
@@ -527,25 +509,19 @@ public class Range extends Controller<Range> {
 		}
 	}
 
-	
-	@Override
-	@ControlP5.Invisible
-	public String toString() {
+	@Override @ControlP5.Invisible public String toString() {
 		return "type:\tRange\n" + super.toString();
 	}
 
-	@Deprecated
-	public float lowValue() {
+	@Deprecated public float lowValue() {
 		return getLowValue();
 	}
 
-	@Deprecated
-	public float highValue() {
+	@Deprecated public float highValue() {
 		return getHighValue();
 	}
 
-	@Deprecated
-	public float[] arrayValue() {
+	@Deprecated public float[] arrayValue() {
 		return _myArrayValue;
 	}
 

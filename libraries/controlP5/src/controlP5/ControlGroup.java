@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -32,19 +32,19 @@ import processing.core.PApplet;
 
 /**
  * <p>
- * In previous versions you would use the ControlGroup class to bundle controllers in a group.
- * Now please use the Group class to do so.
+ * In previous versions you would use the ControlGroup class to bundle controllers in a group. Now
+ * please use the Group class to do so.
  * </p>
  * <p>
  * ControlGroup extends ControllerGroup, for a list and documentation of available methods see the
  * {@link ControllerGroup} documentation.
  * </p>
+ * 
  * @see controlP5.Group
  * @example controllers/ControlP5group
  */
 public class ControlGroup<T> extends ControllerGroup<T> implements ControlListener {
 
-	protected Button _myCloseButton;
 
 	protected int _myBackgroundHeight = 0;
 
@@ -52,9 +52,19 @@ public class ControlGroup<T> extends ControllerGroup<T> implements ControlListen
 
 	protected boolean isEventActive = false;
 
-	protected boolean isBarVisible = true;
-
 	protected List<ControlListener> _myControlListener;
+	
+	/**
+	 * Convenience constructor to extend ControlGroup.
+	 * 
+	 * @example use/ControlP5extendController
+	 * @param theControlP5
+	 * @param theName
+	 */
+	public ControlGroup(ControlP5 theControlP5, String theName) {
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0,100,9);
+		theControlP5.register(theControlP5.papplet, theName, this);
+	}
 
 	public ControlGroup(ControlP5 theControlP5, ControllerGroup<?> theParent, String theName, int theX, int theY, int theW, int theH) {
 		super(theControlP5, theParent, theName, theX, theY);
@@ -67,7 +77,7 @@ public class ControlGroup<T> extends ControllerGroup<T> implements ControlListen
 	@ControlP5.Invisible
 	public void mousePressed() {
 		if (isBarVisible && isCollapse) {
-			if (!cp5.keyHandler.isAltDown) {
+			if (!cp5.isAltDown()) {
 				isOpen = !isOpen;
 				if (isEventActive) {
 					final ControlEvent myEvent = new ControlEvent(this);
@@ -91,6 +101,13 @@ public class ControlGroup<T> extends ControllerGroup<T> implements ControlListen
 		return me;
 	}
 
+	
+	public T setSize(int theWidth, int theHeight) {
+		super.setSize(theWidth, theHeight);
+		setBackgroundHeight(theHeight);
+		return me;
+	}
+	
 	/**
 	 * get the height of the controlGroup's background.
 	 * 
@@ -143,7 +160,7 @@ public class ControlGroup<T> extends ControllerGroup<T> implements ControlListen
 	@Override
 	public T updateInternalEvents(PApplet theApplet) {
 		if (isInside && isBarVisible) {
-			_myControlWindow.setMouseOverController(this);
+			cp5.getWindow().setMouseOverController(this);
 		}
 		return me;
 	}
@@ -169,64 +186,19 @@ public class ControlGroup<T> extends ControllerGroup<T> implements ControlListen
 		if (isBarVisible) {
 			theApplet.fill(isInside ? color.getForeground() : color.getBackground());
 			theApplet.rect(0, -1, _myWidth, -_myHeight);
-			_myLabel.draw(theApplet, 0, -_myHeight, this);
-			if (isCollapse) {
+			_myLabel.draw(theApplet, 0, -_myHeight-1, this);
+			if (isCollapse && isArrowVisible) {
 				theApplet.fill(_myLabel.getColor());
+				theApplet.pushMatrix();
+				theApplet.translate(2,0);
 				if (isOpen) {
 					theApplet.triangle(_myWidth - 10, -_myHeight / 2 - 3, _myWidth - 4, -_myHeight / 2 - 3, _myWidth - 7, -_myHeight / 2);
 				} else {
 					theApplet.triangle(_myWidth - 10, -_myHeight / 2, _myWidth - 4, -_myHeight / 2, _myWidth - 7, -_myHeight / 2 - 3);
 				}
+				theApplet.popMatrix();
 			}
 		}
-	}
-
-	/**
-	 * TODO redesign or deprecate add a close button to the controlbar of this controlGroup.
-	 */
-	@ControlP5.Invisible
-	public T addCloseButton() {
-		if (_myCloseButton == null) {
-			_myCloseButton = new Button(cp5, this, getName() + "close", 1, _myWidth + 1, -10, 12, 9);
-			_myCloseButton.setCaptionLabel("X");
-			_myCloseButton.addListener(this);
-		}
-		return me;
-	}
-
-	/**
-	 * TODO redesign or deprecate remove the close button.
-	 */
-	@ControlP5.Invisible
-	public T removeCloseButton() {
-		if (_myCloseButton == null) {
-			_myCloseButton.remove();
-		}
-		_myCloseButton = null;
-		return me;
-	}
-
-	/**
-	 * @return ControlGroup
-	 */
-	public T hideBar() {
-		isBarVisible = false;
-		return me;
-	}
-
-	/**
-	 * @return ControlGroup
-	 */
-	public T showBar() {
-		isBarVisible = true;
-		return me;
-	}
-
-	/**
-	 * @return boolean
-	 */
-	public boolean isBarVisible() {
-		return isBarVisible;
 	}
 
 	/*

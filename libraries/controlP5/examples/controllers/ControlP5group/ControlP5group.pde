@@ -81,13 +81,13 @@ void draw() {
 void controlEvent(ControlEvent theEvent) {
   if(theEvent.isGroup()) {
     println("got an event from group "
-            +theEvent.group().name()
-            +", isOpen? "+theEvent.group().isOpen()
+            +theEvent.getGroup().getName()
+            +", isOpen? "+theEvent.getGroup().isOpen()
             );
             
   } else if (theEvent.isController()){
     println("got something from a controller "
-            +theEvent.controller().name()
+            +theEvent.getController().getName()
             );
   }
 }
@@ -95,7 +95,9 @@ void controlEvent(ControlEvent theEvent) {
 
 void keyPressed() {
   if(key==' ') {
-    cp5.group("g1").remove();
+    if(cp5.getGroup("g1")!=null) {
+      cp5.getGroup("g1").remove();
+    }
   }
 }
 

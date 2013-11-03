@@ -46,27 +46,11 @@ void setup() {
   frameRate(30);
   cp5 = new ControlP5(this);
 
-  // create a new control window.
-  controlWindow = cp5.addControlWindow("controlP5window", 100, 100, 300, 400);
-
-  // for continuous update use ControlWindow.NORMAL  to update a control
-  // window only when it is in focus, use ControlWindow.ECONOMIC
-  // economic is the default update value.
-  controlWindow.setUpdateMode(ControlWindow.NORMAL);
-
-
   // create a control window canvas and add it to
   // the previously created control window.  
   cc = new MyCanvas();
   cc.pre(); // use cc.post(); to draw on top of existing controllers.
-  controlWindow.addCanvas(cc); // add the canvas to controlWindow
-
-  // now add the same canvas to the default sketch window as well.
-  // here, the draw() method of the ControlWindowCanvas will be called a second time every frame,
-  // therefore the color value of the square does not match the color of the canvas rendered
-  // inside the controlWindow (see above).
-  
-  //controlP5.addCanvas(cc);
+  cp5.addCanvas(cc); // add the canvas to cp5
 }
 
 void draw() {

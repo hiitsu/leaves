@@ -6,6 +6,9 @@
  * loads controller values from a properties-file
  *
  * Properties will only save values not the Controller itself.
+ * 
+ * Also take a look at the use/ControlP5snapshot example to 
+ * save controller values to memory.
  *
  * Use ControllerProperties to load and save serialized controller properties 
  * to a properties file. 

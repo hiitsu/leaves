@@ -109,22 +109,22 @@ void controlEvent(CallbackEvent theEvent) {
   if (theEvent.getController().equals(s2)) {
     switch(theEvent.getAction()) {
       case(ControlP5.ACTION_ENTER): 
-      println("ENTER");
+      println("Action:ENTER");
       break;
       case(ControlP5.ACTION_LEAVE): 
-      println("LEAVE");
+      println("Action:LEAVE");
       break;
       case(ControlP5.ACTION_PRESSED): 
-      println("PRESSED");
+      println("Action:PRESSED");
       break;
       case(ControlP5.ACTION_RELEASED): 
-      println("RELEASED");
+      println("Action:RELEASED");
       break;
       case(ControlP5.ACTION_RELEASEDOUTSIDE): 
-      println("RELEASED OUTSIDE");
+      println("Action:RELEASED OUTSIDE");
       break;
       case(ControlP5.ACTION_BROADCAST): 
-      println("BROADCAST");
+      println("Action:BROADCAST");
       break;
     }
   }
@@ -142,9 +142,10 @@ class Info {
     label = cp5.addTextarea("Hello\nWorld")
                .setSize(200,200)
                .setPosition(300,40)
-               .setFont(ControlP5.standard56)
                .setColor(color(255))
-               .setColorBackground(color(100,0));
+               .setColorBackground(color(100,0))
+               .setLineHeight(12);
+                   
   }
   
   void update() {

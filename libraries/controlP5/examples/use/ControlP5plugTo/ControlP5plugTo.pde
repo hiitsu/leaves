@@ -1,5 +1,5 @@
 /**
-* ControlP5 ControlP5
+* ControlP5 plugTo
 *
 * This example demonstrate how to use the plugTo method to
 * connect a controller to a field or method of a particular object.
@@ -29,7 +29,6 @@ int cnt;
 void setup() {
   size(600,400,OPENGL);
   smooth();
-  textMode(SCREEN);
   test = new Test(50);
   testarray = new Test[10];
   for(int i=0;i<10;i++) {

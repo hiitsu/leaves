@@ -36,11 +36,11 @@ void setup() {
                 .setSpacingColumn(30)
                 .setSpacingRow(20)
                 .addItem("0", 0)
-                .addItem("10", 10)
                 .addItem("50", 50)
                 .addItem("100", 100)
+                .addItem("150", 150)
                 .addItem("200", 200)
-                .addItem("5", 5)
+                .addItem("255", 255)
                 ;
 }
 
@@ -68,6 +68,8 @@ void draw() {
   background(0);
   pushMatrix();
   translate(width/2 + 200, height/2);
+  stroke(255);
+  strokeWeight(2);
   fill(myColorBackground);
   ellipse(0,0,200,200);
   popMatrix();
@@ -76,7 +78,7 @@ void draw() {
 void controlEvent(ControlEvent theEvent) {
   if (theEvent.isFrom(checkbox)) {
     myColorBackground = 0;
-    print("got an event from "+checkbox.getName()+"\t");
+    print("got an event from "+checkbox.getName()+"\t\n");
     // checkbox uses arrayValue to store the state of 
     // individual checkbox-items. usage:
     println(checkbox.getArrayValue());
@@ -92,6 +94,9 @@ void controlEvent(ControlEvent theEvent) {
   }
 }
 
+void checkBox(float[] a) {
+  println(a);
+}
 
 
 /*

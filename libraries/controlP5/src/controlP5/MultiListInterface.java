@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	02/29/2012
- * @version		0.7.1
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -46,8 +46,10 @@ interface MultiListInterface {
 	String name();
 
 	int getDirection();
-	
+
 	MultiListInterface toUpperCase(boolean theValue);
+
+	@Deprecated List<? extends MultiListInterface> getChildren();
 	
-	List<? extends MultiListInterface> getChildren();
+//	List<? extends MultiListInterface> getSubelements();
 }

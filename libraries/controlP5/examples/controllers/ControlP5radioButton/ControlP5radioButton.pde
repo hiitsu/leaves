@@ -76,6 +76,9 @@ void controlEvent(ControlEvent theEvent) {
   }
 }
 
+void radioButton(int a) {
+  println("a radio Button event: "+a);
+}
 
 /*
 a list of all methods available for the RadioButton Controller

@@ -26,7 +26,7 @@ void setup() {
   size(700,400);
   cp5 = new ControlP5(this);
   range = cp5.addRange("rangeController")
-             // disable boradcasting since setRange and setRangeValues will trigger an event
+             // disable broadcasting since setRange and setRangeValues will trigger an event
              .setBroadcast(false) 
              .setPosition(50,50)
              .setSize(400,40)

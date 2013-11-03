@@ -1,3 +1,17 @@
+/**
+* ControlP5 Pointer
+*
+* Default mouse actions use the Pointer class to trigger events.
+* you can manipulate the x and y fields of the Pointer class
+* for customizing input events for example when using a 
+* different input than the mouse.
+* Here in this example the mouse coordiates are reveresed.
+*
+* by Andreas Schlegel, 2012
+* www.sojamo.de/libraries/controlp5
+*
+*/
+
 import controlP5.*;
 
 ControlP5 cp5;
