@@ -1,33 +1,33 @@
-import codeanticode.gsvideo.*;
 import processing.net.*;
 import controlP5.*;
 import processing.net.*;
 import processing.video.*;
 import s373.flob.*;
 
-ControlP5 controlP5;
 Server server;
-GSCapture cam;
-Flob flob;
-ArrayList blobs; 
-int videotex = 3; //case 0: videotex = videoimg;//case 1: videotex = videotexbin; 
-//case 2: videotex = videotexmotion//case 3: videotex = videoteximgmotion; 
-int fade = 40;
-int edgeThreshold = 40;
-int minimumArea = 32,
-    maximumArea = 160*120;
+ControlP5 controlP5;
+Capture video;    // processing video capture
+Flob flob;        // flob tracker instance
+PImage videoinput;// a downgraded image to flob as input
+int tresh = 10;   // adjust treshold value here or keys t/T
+int fade = 55;
+int om = 1;
+int videores=128;//64//256
+String info="";
+PFont font;
+float fps = 60;
+int videotex = 3;
+    
 Slider2D leftTop,bottomRight;
 float updateIntervalMillis = 20;
 float lastUpdateMillis = -1;
 float cx,cy,ox,oy;
-
 ArrayList previousPositions; 
-int MAX_TRACKED = 10;
-int FPS = 25;
+ArrayList validIndices;
 
 void setup() {
 
-  String[] cameras = GSCapture.list();
+  String[] cameras = Capture.list();
   
   if (cameras.length == 0)
   {
@@ -38,126 +38,97 @@ void setup() {
     for (int i = 0; i < cameras.length; i++) {
       println(cameras[i]);
     }
-    cam = new GSCapture(this, 160, 120, cameras[0]);
-    cam.start();    
-
-    
-    // You can get the resolutions supported by the
-    // capture device using the resolutions() method.
-    // It must be called after creating the capture 
-    // object. 
-    int[][] res = cam.resolutions();
-    for (int i = 0; i < res.length; i++) {
-      println(res[i][0] + "x" + res[i][1]);
-    } 
-    
-  
-    
-    // You can also get the framerates supported by the
-    // capture device:
-    String[] fps = cam.framerates();
-    for (int i = 0; i < fps.length; i++) {
-      println(fps[i]);
-    } 
-       
   }
-  size(500,600);
+  size(500,600,OPENGL);
 
   server = new Server(this, 12345);
-  //cam = new Capture(this,160,120,FPS);
-  frameRate(FPS);
-  // setup the detection parameters
-  flob = new Flob(cam, 160,120);
-  flob.setSrcImage(videotex);
-  //flob.setBackground(cam);
-  flob.setBlur(0);
-  flob.setOm(1);
-  flob.setFade(fade);
-  flob.setMirror(true,true);
+  frameRate(fps);
+  video = new Capture(this, 320, 240, (int)fps); 
+  video.start();
+  videoinput = createImage(videores, videores, RGB);
+  flob = new Flob(this, videoinput);
+  flob.setOm(0); //flob.setOm(flob.STATIC_DIFFERENCE);
+  flob.setOm(1); //flob.setOm(flob.CONTINUOUS_DIFFERENCE);
+  flob.setThresh(tresh).setSrcImage(videotex).setBackground(videoinput)
+  .setBlur(0).setOm(1).setFade(fade).setMirror(false,false);
+  
+  controlP5 = new ControlP5(this);
+  controlP5.setAutoInitialization(true);
 
-        controlP5 = new ControlP5(this);
-	controlP5.setAutoInitialization(true);
+  // controls on the left side
+  controlP5.addSlider("updateIntervalMillis",5,1000,updateIntervalMillis,20,60,30,80);
+  controlP5.addSlider("edgeThreshold",1,200,tresh,20,360,30,80);
+  controlP5.addSlider("fade",5,200,fade,20,460,30,80);
 
-	// controls on the left side
-	controlP5.addSlider("updateIntervalMillis",5,1000,updateIntervalMillis,20,60,30,80);
-	controlP5.addSlider("minimumArea",4,300,minimumArea,20,160,30,80);
-	controlP5.addSlider("maximumArea",10,19200,maximumArea,20,260,30,80);
-	controlP5.addSlider("edgeThreshold",1,200,edgeThreshold,20,360,30,80);
-	controlP5.addSlider("fade",5,200,fade,20,460,30,80);
+  // controls on the right side
+  leftTop = controlP5.addSlider2D("leftTop",0,160,0,120,10,10,width-90,110,80,80);
+  bottomRight = controlP5.addSlider2D("bottomRight",160,320,120,240,width-10,height-10,width-90,210,80,80);
 
-	// controls on the right side
-	leftTop = controlP5.addSlider2D("leftTop",0,160,0,120,10,10,width-90,110,80,80);
-	bottomRight = controlP5.addSlider2D("bottomRight",160,320,120,240,width-10,height-10,width-90,210,80,80);
-
-        previousPositions = new ArrayList();
-
+  previousPositions = new ArrayList();
+  textFont(createFont("monaco",18));
+  println("video w,h is "+video.width + ","+video.height);
+  validIndices = new ArrayList();
 }
 
 void draw() {
-  if (cam.available() == true) {
-    flob.setThresh(edgeThreshold);
-    cam.read();
-    blobs = flob.calc(flob.binarize(cam));
-  
+  if(video.available()) {
+     video.read();
+     videoinput.copy(video,0,0,320,240,0,0,videores,videores);
+     flob.calc(flob.binarize(videoinput));
+  }
     float currentMillis = millis();
     background(0);
-    image(flob.getSrcImage(),80,320-30,320,240); // absolute difference image
+    image(flob.getImage(),80,290,320,240); // absolute difference image
+    image(video,80,10,320,240);
     
     // go through blobs to validate them that they are proper size and on correct area
     pushMatrix();
-    translate(80,290);
-    ArrayList validIndices = new ArrayList();
-    for( int i=0; i<blobs.size(); i++ ) {
-        ABlob blob = (ABlob)blobs.get(i);
-        
-        // area validations
-        float area = blob.dimx * blob.dimy;
-        fill(0,255,0,64);
-        stroke(0,255,0,64);
-        rectMode(CENTER);
-        rect(blob.cx,blob.cy,blob.dimx,blob.dimy);
-        rectMode(CORNER);
-        if( area < minimumArea || area > maximumArea ) {
-           //println("area too big or small");
-           continue;
-        }
-
-        // location validations 
-        float leftPosition    = blob.cx-blob.dimx/2;
-        float rightPosition   = blob.cx+blob.dimx/2;
-        float topPosition     = blob.cy-blob.dimy/2;
-        float bottomPosition  = blob.cy+blob.dimy/2;
+    translate(80,10);
+    rectMode(CENTER);
+    
+    validIndices.clear();
+  for(int i = 0; i < flob.getNumBlobs(); i++) {
+        ABlob blob = (ABlob)flob.getABlob(i); 
+        float bx = map(blob.cx,0,500,0,320);
+        float by = map(blob.cy,0,600,0,240);
+        float dimx = blob.dimx*(320.0/500.0);
+        float dimy = blob.dimy*(240.0/600.0);
+        fill(0,0,255,64);
+        stroke(0,0,255);
+        rect(bx,by,dimx,dimy);
+        fill(0,255,0);
+        String info = int(bx)+","+int(by);
+        text(info,bx,by+20);
         float leftLimit       = leftTop.getArrayValue()[0];
         float topLimit        = leftTop.getArrayValue()[1];
         float rightLimit      = bottomRight.getArrayValue()[0];
         float bottomLimit     = bottomRight.getArrayValue()[1];
-        if( leftPosition >= leftLimit && rightPosition <= rightLimit &&
-            topPosition >= topLimit && bottomPosition <= bottomLimit ) {
-            
+        if( bx >= leftLimit && bx <= rightLimit &&
+            by >= topLimit && by <= bottomLimit ) {
             validIndices.add(i);
-            // ok we are tracking this blob, so draw a box around it
-            //float mappedX = map(blob.cx,0,
-            fill(0,0,255,64);
-            stroke(0,0,255,64);
-            rectMode(CENTER);            
-            rect(blob.cx,blob.cy,blob.dimx,blob.dimy);
-            
-            rectMode(CORNER);
-         }
+        }
     } // end validations
     popMatrix();
     
+    pushMatrix();
+    translate(80,290);
     ArrayList currentPositions = new ArrayList();
     float elapsed = currentMillis - lastUpdateMillis;
     if( validIndices.size()> 0 ) { // some blobs passed validations?
        if( elapsed > updateIntervalMillis ) { // and enough time between the updates
          for(int i = validIndices.size()-1; i >=0; i--){
              int index = (Integer)validIndices.get(i);
-             ABlob b = (ABlob) blobs.get(index);
-             float cx = b.cx;
-             float cy = b.cy;
+             ABlob b = (ABlob) (ABlob)flob.getABlob(index);
+             float bx = map(b.cx,0,500,0,320);
+             float by = map(b.cy,0,600,0,240);
+             float dimx = b.dimx*(320.0/500.0);
+             float dimy = b.dimy*(240.0/600.0);
+             fill(0,0,255,64);
+             stroke(0,0,255);
+             rect(bx,by,dimx,dimy);
+             fill(0,255,0);
               // match to previous positions
-             currentPositions.add(new float[] { cx,cy});
+             currentPositions.add(new float[] { bx,by});
              for(int j = previousPositions.size()-1; j >= 0; j--) {
                   float[] coordinates = (float[])previousPositions.get(j);
                   // distance with pythagoras
@@ -176,9 +147,9 @@ void draw() {
          lastUpdateMillis = millis();
       }
     }
+    popMatrix();
     
-    image(cam,80,10,320,240);
-    stroke(255,0,0);
+
     
     /* mapping limiter coordinates from window space to the 320x240 tile
     float mappedLeft = map(leftTop.getArrayValue()[0],0,width,0,320);
@@ -186,6 +157,8 @@ void draw() {
     float mappedTop = map(leftTop.getArrayValue()[1],0,width,0,240);
     float mappedBottom = map(bottomRight.getArrayValue()[0],0,width,0,240);
     */
+    stroke(255,0,0); 
+    rectMode(CORNER);
     float mappedLeft = leftTop.getArrayValue()[0];
     float mappedRight = bottomRight.getArrayValue()[0];
     float mappedTop = leftTop.getArrayValue()[1];
@@ -200,38 +173,28 @@ void draw() {
     rect(80,320-30,320,240);
     text("use 'S' to save and 'L' load settings",20,20);
     text("FPS:"+frameRate,20,40);
- }
-
 }
 
 void keyPressed() {
        if( key == 's' || key == 'S' ) {
-		controlP5.saveProperties();
-	} else if( key == 'l' || key == 'L' ) {
-		controlP5.loadProperties();
-	}
+    controlP5.saveProperties();
+  } else if( key == 'l' || key == 'L' ) {
+    controlP5.loadProperties();
+  }
 }
 
 
 void updateIntervalMillis(float v){
-	updateIntervalMillis = v;
-	println("updateIntervalMillis set to: "+v);
+  updateIntervalMillis = v;
+  println("updateIntervalMillis set to: "+v);
 }
 void edgeThreshold(int v){
-	edgeThreshold = v;
-	println("edgeThreshold set to: "+v);
-}
-void minimumArea(int v){
-	minimumArea = v;
-	println("minimumArea set to: "+v);
-}
-void maximumArea(int v){
-	maximumArea = v;
-	println("maximumArea set to: "+v);
+  tresh = v;
+  println("edgeThreshold set to: "+v);
 }
 void fade(int v){
-	fade = v;
-	println("fade set to: "+v);
+  fade = v;
+  println("fade set to: "+v);
         flob.setFade(fade);
 }
 void sendVector(float x1,float y1, float x2, float y2) {
@@ -254,7 +217,7 @@ byte[] byta(float v){
 /*
 void leftTop(){
     if( leftTop != null )
-	println("leftTop set to: "+Arrays.toString(leftTop.getArrayValue()));
+  println("leftTop set to: "+Arrays.toString(leftTop.getArrayValue()));
 }
 */
 
