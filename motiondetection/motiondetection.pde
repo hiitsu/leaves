@@ -39,11 +39,11 @@ void setup() {
       println(cameras[i]);
     }
   }
-  size(500,600,OPENGL);
+  size(500,600);
 
   server = new Server(this, 12345);
   frameRate(fps);
-  video = new Capture(this, 320, 240, (int)fps); 
+  video = new Capture(this, 320, 240, 30); 
   video.start();
   videoinput = createImage(videores, videores, RGB);
   flob = new Flob(this, videoinput);
@@ -190,6 +190,7 @@ void updateIntervalMillis(float v){
 }
 void edgeThreshold(int v){
   tresh = v;
+  flob.setThresh(v);
   println("edgeThreshold set to: "+v);
 }
 void fade(int v){
