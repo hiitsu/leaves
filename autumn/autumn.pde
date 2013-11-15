@@ -75,8 +75,10 @@ void setup() {
         backgroundMovie = new Movie(this,"Projectie_Gluco_v03.mp4");
         backgroundMovie.noLoop();
         backgroundMovie.frameRate(movieFps);
-        backgroundMovie.pause();
+        backgroundMovie.play();
+        controlP5.loadProperties();
         network(true);
+        
 }
 void playIt() {
       backgroundMovie.play();
@@ -300,7 +302,11 @@ void network(boolean flag){
 		client = null;
         }
 	if( flag ) {
-            client = new Client(this, "127.0.0.1", 12345);
+          try {
+             client = new Client(this, "127.0.0.1", 12345);
+          } catch(Exception e){
+            println("Error in enabling network communication"+e);
+          }
 	}
 }
 // read images files from disk into ArrayList<PImage> images
