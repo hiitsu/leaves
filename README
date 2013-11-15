@@ -1,4 +1,4 @@
 Use processing 2.0.3.
 Copy libraries to ~/Documents/Processing/libraries and AFTER that open Processing IDE.
 First start motiondetection sketch, it start tracking and open TCP server into port 12345.
-Then start autumn sketch, it will try to connect to localhost:12345, if successfully will start receiving coordinates from there.
+Then start autumn sketch, it will connect to localhost:12345 and start receiving movement vectors from there.
