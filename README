@@ -1,4 +1,4 @@
-you need processing 1.5.1 and 2.0 alpha to run these sketches
-copy libraries to library folder, do it for both processing versions
-run motiondetection with processing 1.5.1
-run leaves with processing 2.0 alpha
+Use processing 2.0.3.
+Copy libraries to ~/Documents/Processing/libraries and AFTER that open Processing IDE.
+First start motiondetection sketch, it start tracking and open TCP server into port 12345.
+Then start autumn sketch, it will try to connect to localhost:12345, if successfully will start receiving coordinates from there.
