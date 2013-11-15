@@ -21,13 +21,12 @@ int videotex = 3;
 Slider2D leftTop,bottomRight;
 float updateIntervalMillis = 20;
 float lastUpdateMillis = -1;
-float cx,cy,ox,oy;
 ArrayList previousPositions; 
 ArrayList validIndices;
 
 void setup() {
 
-  String[] cameras = Capture.list();
+  /*String[] cameras = Capture.list();
   
   if (cameras.length == 0)
   {
@@ -38,7 +37,7 @@ void setup() {
     for (int i = 0; i < cameras.length; i++) {
       println(cameras[i]);
     }
-  }
+  }*/
   size(500,600);
 
   server = new Server(this, 12345);
@@ -54,20 +53,25 @@ void setup() {
   
   controlP5 = new ControlP5(this);
   
-
   // controls on the left side
   controlP5.addSlider("updateIntervalMillis",5,1000,updateIntervalMillis,20,60,30,80);
   controlP5.addSlider("edgeThreshold",1,200,tresh,20,360,30,80);
   controlP5.addSlider("fade",5,200,fade,20,460,30,80);
 
   // controls on the right side
-  leftTop = controlP5.addSlider2D("leftTop",0,160,0,120,10,10,width-90,110,80,80);
   bottomRight = controlP5.addSlider2D("bottomRight",160,320,120,240,width-10,height-10,width-90,210,80,80);
+  leftTop = controlP5.addSlider2D("leftTop",0,160,0,120,10,10,width-90,110,80,80);
 
   previousPositions = new ArrayList();
   textFont(createFont("monaco",18));
   println("video w,h is "+video.width + ","+video.height);
   validIndices = new ArrayList();
+  
+  try {
+    controlP5.loadProperties();
+  } catch(Exception e){
+    println("no saved values file found");
+  }
 }
 
 void draw() {
@@ -149,14 +153,6 @@ void draw() {
     }
     popMatrix();
     
-
-    
-    /* mapping limiter coordinates from window space to the 320x240 tile
-    float mappedLeft = map(leftTop.getArrayValue()[0],0,width,0,320);
-    float mappedRight = map(bottomRight.getArrayValue()[0],0,width,0,320);
-    float mappedTop = map(leftTop.getArrayValue()[1],0,width,0,240);
-    float mappedBottom = map(bottomRight.getArrayValue()[0],0,width,0,240);
-    */
     stroke(255,0,0); 
     rectMode(CORNER);
     float mappedLeft = leftTop.getArrayValue()[0];
@@ -176,13 +172,12 @@ void draw() {
 }
 
 void keyPressed() {
-       if( key == 's' || key == 'S' ) {
+  if( key == 's' || key == 'S' ) {
     controlP5.saveProperties();
   } else if( key == 'l' || key == 'L' ) {
     controlP5.loadProperties();
   }
 }
-
 
 void updateIntervalMillis(float v){
   updateIntervalMillis = v;
@@ -196,7 +191,7 @@ void edgeThreshold(int v){
 void fade(int v){
   fade = v;
   println("fade set to: "+v);
-        flob.setFade(fade);
+  flob.setFade(fade);
 }
 void sendVector(float x1,float y1, float x2, float y2) {
    println("Sending vector:  "+x1+","+y1+","+x2+","+y2);
@@ -216,11 +211,17 @@ byte[] byta(float v){
         (byte)((i >> 0) & 0xff),
     };
 }
+
 /*
 void leftTop(){
-    if( leftTop != null )
-  println("leftTop set to: "+Arrays.toString(leftTop.getArrayValue()));
+  println("leftTop set to: ");
+   if( leftTop != null )
+    println(leftTop.getArrayValue());
 }
-*/
 
+void bottomRight(){
+  println("bottomRight set to: ");
+   if( bottomRight != null )
+    println(bottomRight.getArrayValue());
+}*/
 
