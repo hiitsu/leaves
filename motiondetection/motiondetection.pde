@@ -23,6 +23,7 @@ float updateIntervalMillis = 20;
 float lastUpdateMillis = -1;
 ArrayList previousPositions; 
 ArrayList validIndices;
+ArrayList movementVectors;
 
 void setup() {
 
@@ -66,7 +67,7 @@ void setup() {
   textFont(createFont("monaco",18));
   println("video w,h is "+video.width + ","+video.height);
   validIndices = new ArrayList();
-  
+  movementVectors = new ArrayList();
   try {
     controlP5.loadProperties();
   } catch(Exception e){
@@ -123,6 +124,7 @@ void draw() {
     float elapsed = currentMillis - lastUpdateMillis;
     if( validIndices.size()> 0 ) { // some blobs passed validations?
        if( elapsed > updateIntervalMillis ) { // and enough time between the updates
+         movementVectors.clear();
          for(int i = validIndices.size()-1; i >=0; i--){
              int index = (Integer)validIndices.get(i);
              ABlob b = (ABlob) (ABlob)flob.getABlob(index);
@@ -164,6 +166,10 @@ void draw() {
     line(80,10+mappedTop,400,10+mappedTop);
     line(80,10+mappedBottom,400,10+mappedBottom);
     
+    for(int i=0; i < movementVectors.size();i++){
+      float[] v = (float[])movementVectors.get(i);
+      line(80+v[0],10+v[1],80+v[2],10+v[3]);
+    }
     // draw the frame for edged image
     noFill();
     rect(80,320-30,320,240);
@@ -194,11 +200,26 @@ void fade(int v){
   flob.setFade(fade);
 }
 void sendVector(float x1,float y1, float x2, float y2) {
-   println("Sending vector:  "+x1+","+y1+","+x2+","+y2);
-   server.write(byta(map(x1,0,320,0,1024)));
-   server.write(byta(map(y1,0,240,0,768)));
-   server.write(byta(map(x2,0,320,0,1024)));
-   server.write(byta(map(y2,0,240,0,768)));
+   float mappedLeft = leftTop.getArrayValue()[0];
+   float mappedRight = bottomRight.getArrayValue()[0];
+   float mappedTop = leftTop.getArrayValue()[1];
+   float mappedBottom = bottomRight.getArrayValue()[1];
+   
+   float _x1 = map(x1-mappedLeft,0,mappedRight-mappedLeft,0,1024);
+   float _y1 = map(y1-mappedTop,0,mappedBottom-mappedTop,0,768);
+   float _x2 = map(x2-mappedLeft,0,mappedRight-mappedLeft,0,1024);
+   float _y2 = map(y2-mappedTop,0,mappedBottom-mappedTop,0,768);
+   //println("Sending vector: "+x1+","+y1+","+x2+","+y2+" mapped to "+_x1+","+_y1+","+_x2+","+_y2);
+   movementVectors.add(new float[]{
+     map(_x1,0,1024,0,320),
+     map(_y1,0,768,0,240),
+     map(_x2,0,1024,0,320),
+     map(_y2,0,768,0,240)
+   });
+   server.write(byta(_x1));
+   server.write(byta(_y1));
+   server.write(byta(_x2));
+   server.write(byta(_y2));
    server.write(new byte[]{13,13,13});
 }
 
