@@ -46,6 +46,7 @@ boolean drawMovie = true,
 void setup() {
 	size(1024, 768,OPENGL);
 	frameRate(fps);
+        noCursor();
 	hint(DISABLE_DEPTH_TEST);
         hint(DISABLE_DEPTH_SORT);
 	overlayImage = loadImage("overlay.png");
